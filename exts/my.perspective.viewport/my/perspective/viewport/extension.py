@@ -129,6 +129,11 @@ class MyExtension(omni.ext.IExt):
                         self.__show_window(None, False)
                 self.__window = ViewportWindow(MyExtension.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(visiblity_changed)
+                print(self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport_layers)
+
+                
+
+
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
             self.__window.destroy()
@@ -212,4 +217,57 @@ class MyExtension(omni.ext.IExt):
             except Exception:
                 pass
 
-    
+
+
+    # ['_ViewportWindow__name', '_ViewportWindow__external_drop_support', '_ViewportWindow__added_frames',
+    #  '_ViewportWindow__z_stack', '_ViewportWindow__viewport_layers', '__module__', '__doc__', '__init__', 'name', 
+    #  'viewport_api', 'set_style', 'add_external_drag_drop_support', 'remove_external_drag_drop_support', 
+    #  'get_frame', '__del__', 'destroy', '_ViewportWindow__external_drop', '_ViewportWindow__frame_built', 
+    #  '_ViewportWindow__selected_in_dock_changed', '_ViewportWindow__dock_changed', 'set_default_style', 'get_instances',
+    #   '_ViewportWindow__clean_instances', '_ViewportWindow__g_instances', '_ViewportWindow__g_default_style', '__dict__',
+    #    'notify_app_window_change', 'get_window_callback', 'move_to_app_window', 'set_top_modal', 'visible', 'title', 
+    #    'flags', 'padding_x', 'padding_y', 'width', 'height', 'position_x', 'position_y', 'setPosition', 'auto_resize', 
+    #    'noTabBar', 'exclusive_keyboard', 'detachable', 'docked', 'selected_in_dock', 'frame', 'menu_bar', 'focused', 
+    #    'set_visibility_changed_fn', 'set_width_changed_fn', 'set_height_changed_fn', 'set_position_x_changed_fn', 
+    #    'set_position_y_changed_fn', 'set_docked_changed_fn', 'set_selected_in_dock_changed_fn', 'set_key_pressed_fn', 
+    #    'has_key_pressed_fn', 'call_key_pressed_fn', 'dock_in_window', 'deferred_dock_in', 'set_focused_changed_fn', 
+    #    'dock_tab_bar_visible', 'dock_tab_bar_enabled', 'dock_order', 'dock_id', 'undock', 'dock_in', 'focus', 
+    #    'is_selected_in_dock', '__repr__', '__new__', '__hash__', '__str__', '__getattribute__', '__setattr__', 
+    #    '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__reduce_ex__', '__reduce__', 
+    #    '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__']
+
+
+#    ['__init__', '__doc__', '__module__', 'shown', 'get_current', 'show', 'show_at', 'hide', 'invalidate', 
+#    'set_shown_changed_fn', 'tearable', 'teared', 'set_teared_changed_fn', 'set_on_build_fn', 'has_on_build_fn', 
+#    'call_on_build_fn', 'direction', 'content_clipping', 'spacing', 'add_child', 'clear', '__enter__', '__exit__', 
+#    'FLAG_WANT_CAPTURE_KEYBOARD', 'destroy', 'set_style', 'width', 'height', 'name', 'style_type_name_override', 
+#    'identifier', 'style', 'visible', 'visible_min', 'visible_max', 'tooltip', 'set_tooltip', 'scroll_here_x', 
+#    'scroll_here_y', 'scroll_here', 'tooltip_offset_x', 'tooltip_offset_y', 'enabled', 'selected', 'checked', 
+#    'dragging', 'opaque_for_mouse_events', 'skip_draw_when_clipped', 'computed_width', 'computed_height', 
+#    'computed_content_width', 'computed_content_height', 'screen_position_x', 'screen_position_y', 'set_checked_changed_fn', 
+#    'set_tooltip_fn', 'has_tooltip_fn', 'call_tooltip_fn', 'set_mouse_moved_fn', 'has_mouse_moved_fn', 'call_mouse_moved_fn',
+#     'set_mouse_pressed_fn', 'has_mouse_pressed_fn', 'call_mouse_pressed_fn', 'set_mouse_released_fn', 'has_mouse_released_fn', 
+#     'call_mouse_released_fn', 'set_mouse_double_clicked_fn', 'has_mouse_double_clicked_fn', 'call_mouse_double_clicked_fn', 
+#     'set_mouse_wheel_fn', 'has_mouse_wheel_fn', 'call_mouse_wheel_fn', 'set_mouse_hovered_fn', 'has_mouse_hovered_fn',
+#      'call_mouse_hovered_fn', 'set_key_pressed_fn', 'has_key_pressed_fn', 'call_key_pressed_fn', 'set_drag_fn', 'has_drag_fn', 
+#      'call_drag_fn', 'set_accept_drop_fn', 'has_accept_drop_fn', 'call_accept_drop_fn', 'set_drop_fn', 'has_drop_fn', 
+#      'call_drop_fn', 'set_computed_content_size_changed_fn', 'has_computed_content_size_changed_fn', 
+#      'call_computed_content_size_changed_fn', '__new__', '__repr__', '__hash__', '__str__', '__getattribute__', 
+#      '__setattr__', '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__reduce_ex__', 
+#      '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__', 
+#      'text', 'delegate', 'hotkey_text', 'checkable', 'hide_on_click', 'menu_compatibility', 'set_triggered_fn', 
+#      'has_triggered_fn', 'call_triggered_fn']
+
+#  ['_ViewportLayers__viewport_layers', '_ViewportLayers__added_frames', '_ViewportLayers__ui_frame', 
+#  '_ViewportLayers__viewport', '_ViewportLayers__zstack', '_ViewportLayers__timeline', '__module__', '__doc__', 
+#  'viewport_api', 'layers', 'get_frame', '__init__', '_ViewportLayers__viewport_updated', 
+#  '_ViewportLayers__viewport_layer_event', '__del__', 'destroy', '__dict__', '__weakref__', '__repr__', '__hash__', 
+#  '__str__', '__getattribute__', '__setattr__', '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', 
+#  '__new__', '__reduce_ex__', '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', 
+#  '__class__']
+
+# ['__repr__', '__hash__', '__getattribute__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', 
+# '__init__', '__len__', '__getitem__', '__setitem__', '__delitem__', '__contains__', '__new__', '__sizeof__', 'get', 
+# 'setdefault', 'pop', 'popitem', 'keys', 'items', 'values', 'update', 'fromkeys', 'clear', 'copy', '__doc__', '__str__', 
+# '__setattr__', '__delattr__', '__reduce_ex__', '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', 
+# '__dir__', '__class__']
