@@ -8,8 +8,8 @@ from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDro
 from  omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDropDelegate
 from  omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
 import carb
-DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.vireport/startup/windowName'
-DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.vireport/startup/disableWindowOnLoad'
+DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
+DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
 
 
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
@@ -46,6 +46,7 @@ class MyExtension(omni.ext.IExt):
         #     # print(self.viewport_api.projection)
         #     # print(self.viewport_api.transform)
         
+        self.mainmenu = None
 
         settings = carb.settings.get_settings()
         default_name = settings.get(DEFAULT_VIEWPORT_NAME) or MyExtension.WINDOW_NAME
@@ -129,10 +130,18 @@ class MyExtension(omni.ext.IExt):
                         self.__show_window(None, False)
                 self.__window = ViewportWindow(MyExtension.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(visiblity_changed)
-                print(self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport_layers)
-
-                
-
+                with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
+                    self.mainmenu  = ui.Menu("Direction of View")
+                    with self.mainmenu:
+                        ui.MenuItem("Perspective")
+                        with ui.Menu("Orthographic"):
+                            ui.MenuItem("Top")
+                            ui.MenuItem("Front")
+                            ui.MenuItem("Back")
+                            ui.MenuItem("Left")
+                            ui.MenuItem("Right")
+                        ui.MenuItem("Isometric")
+                        ui.MenuItem("Dimetric")
 
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
@@ -271,3 +280,19 @@ class MyExtension(omni.ext.IExt):
 # 'setdefault', 'pop', 'popitem', 'keys', 'items', 'values', 'update', 'fromkeys', 'clear', 'copy', '__doc__', '__str__', 
 # '__setattr__', '__delattr__', '__reduce_ex__', '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', 
 # '__dir__', '__class__']
+
+# ['_ViewportWidget__ui_frame', '_ViewportWidget__stage_listener', '_ViewportWidget__rsettings_changed', '_ViewportWidget__viewport_texture', 
+# '_ViewportWidget__viewport_image', '_ViewportWidget__viewport_provider', '_ViewportWidget__vp_api', '_ViewportWidget__proxy_api', 
+# '_ViewportWidget__update_api_texture', '_ViewportWidget__stage_subscription', '__module__', '__doc__', '_ViewportWidget__g_instances', 
+# 'get_instances', '_ViewportWidget__clean_instances', 'viewport_api', 'name', 'visible', '__init__', 'destroy', 'usd_context_name', 
+# '_viewport_changed', '_ViewportWidget__ensure_usd_context', '_ViewportWidget__ensure_usd_stage', '_ViewportWidget__remove_notifications', 
+# '_ViewportWidget__setup_notifications', '_ViewportWidget__build_ui', '_ViewportWidget__destroy_ui', '_ViewportWidget__set_image_data', 
+# '_ViewportWidget__on_stage_opened', '__dict__', '__weakref__', '__repr__', '__hash__', '__str__', '__getattribute__', '__setattr__', 
+# '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__new__', '__reduce_ex__', '__reduce__', '__subclasshook__', 
+# '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__']
+
+['_MyExtension__window', '_MyExtension__registered', '__module__', '__all__', 'WINDOW_NAME', 'MENU_PATH', 'on_startup', 
+'on_shutdown', 'dock_with_window', '_MyExtension__set_menu', '_MyExtension__show_window', '_MyExtension__register_scenes', 
+'_MyExtension__unregister_scenes', '__dict__', '__doc__', '__init__', 'startup', 'shutdown', '__new__', '__repr__', '__hash__', 
+'__str__', '__getattribute__', '__setattr__', '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', 
+'__reduce_ex__', '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__']
