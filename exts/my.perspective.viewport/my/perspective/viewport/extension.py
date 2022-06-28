@@ -46,7 +46,6 @@ class MyExtension(omni.ext.IExt):
         #     # print(self.viewport_api.projection)
         #     # print(self.viewport_api.transform)
         
-        self.mainmenu = None
 
         settings = carb.settings.get_settings()
         default_name = settings.get(DEFAULT_VIEWPORT_NAME) or MyExtension.WINDOW_NAME
@@ -76,18 +75,21 @@ class MyExtension(omni.ext.IExt):
         )
 
         with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
+            # ui.Button("Right Click to Direction of Views", width = 200, height = 50, clicked_fn = lambda: self.menu_helper())
             self.mainmenu  = ui.Menu("Direction of View")
             with self.mainmenu:
-                ui.MenuItem("Perspective")
+                ui.MenuItem("Perspective", height = 100)
                 with ui.Menu("Orthographic"):
-                    ui.MenuItem("Top")
+                    top = ui.MenuItem("Top")
+                    # top.set_mouse_pressed_fn(self.)
+                    top.set_mouse_pressed_fn(self.menu_helper)
                     ui.MenuItem("Front")
                     ui.MenuItem("Back")
                     ui.MenuItem("Left")
                     ui.MenuItem("Right")
                 ui.MenuItem("Isometric")
                 ui.MenuItem("Dimetric")
-        self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api.camera_path = Sdf.Path('/World/Camera')
+            self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api.camera_path = Sdf.Path('/World/Camera')
 
 
 
@@ -145,8 +147,9 @@ class MyExtension(omni.ext.IExt):
                         self.__show_window(None, False)
                 self.__window = ViewportWindow(MyExtension.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(visiblity_changed)
+
                 # with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
-                #     self.mainmenu  = ui.Menu("Direction of View")
+                #     self.mainmenu = ui.Menu("Direction of View")
                 #     with self.mainmenu:
                 #         ui.MenuItem("Perspective")
                 #         with ui.Menu("Orthographic"):
@@ -157,7 +160,7 @@ class MyExtension(omni.ext.IExt):
                 #             ui.MenuItem("Right")
                 #         ui.MenuItem("Isometric")
                 #         ui.MenuItem("Dimetric")
-                # self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api.camera_path = Sdf.Path('/World/Camera')
+                #     self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api.camera_path = Sdf.Path('/World/Camera')
                 
 
         elif self.__window:
@@ -245,4 +248,16 @@ class MyExtension(omni.ext.IExt):
 
 
 
-    
+    def menu_helper(self):
+        self.mainmenu  = ui.Menu("Direction of View")
+        with self.mainmenu:
+            ui.MenuItem("Perspective", height = 100)
+            with ui.Menu("Orthographic"):
+                ui.MenuItem("Top")
+                ui.MenuItem("Front")
+                ui.MenuItem("Back")
+                ui.MenuItem("Left")
+                ui.MenuItem("Right")
+            ui.MenuItem("Isometric")
+            ui.MenuItem("Dimetric")
+
