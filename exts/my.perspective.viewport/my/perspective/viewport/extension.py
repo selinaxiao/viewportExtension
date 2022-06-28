@@ -1,7 +1,7 @@
 import omni.ext
 import omni.ui as ui
 from omni.kit.widget.viewport import ViewportWidget
-
+from pxr import Sdf
 from omni.ui import Workspace
 from  omni.kit.viewport.window.window import ViewportWindow
 from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
@@ -75,6 +75,21 @@ class MyExtension(omni.ext.IExt):
             MaterialFileDropDelegate()
         )
 
+        with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
+            self.mainmenu  = ui.Menu("Direction of View")
+            with self.mainmenu:
+                ui.MenuItem("Perspective")
+                with ui.Menu("Orthographic"):
+                    ui.MenuItem("Top")
+                    ui.MenuItem("Front")
+                    ui.MenuItem("Back")
+                    ui.MenuItem("Left")
+                    ui.MenuItem("Right")
+                ui.MenuItem("Isometric")
+                ui.MenuItem("Dimetric")
+        self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api.camera_path = Sdf.Path('/World/Camera')
+
+
 
     def on_shutdown(self):
         print("[my.perspective.viewport] MyExtension shutdown")
@@ -130,18 +145,20 @@ class MyExtension(omni.ext.IExt):
                         self.__show_window(None, False)
                 self.__window = ViewportWindow(MyExtension.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(visiblity_changed)
-                with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
-                    self.mainmenu  = ui.Menu("Direction of View")
-                    with self.mainmenu:
-                        ui.MenuItem("Perspective")
-                        with ui.Menu("Orthographic"):
-                            ui.MenuItem("Top")
-                            ui.MenuItem("Front")
-                            ui.MenuItem("Back")
-                            ui.MenuItem("Left")
-                            ui.MenuItem("Right")
-                        ui.MenuItem("Isometric")
-                        ui.MenuItem("Dimetric")
+                # with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
+                #     self.mainmenu  = ui.Menu("Direction of View")
+                #     with self.mainmenu:
+                #         ui.MenuItem("Perspective")
+                #         with ui.Menu("Orthographic"):
+                #             ui.MenuItem("Top")
+                #             ui.MenuItem("Front")
+                #             ui.MenuItem("Back")
+                #             ui.MenuItem("Left")
+                #             ui.MenuItem("Right")
+                #         ui.MenuItem("Isometric")
+                #         ui.MenuItem("Dimetric")
+                # self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api.camera_path = Sdf.Path('/World/Camera')
+                
 
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
@@ -291,8 +308,8 @@ class MyExtension(omni.ext.IExt):
 # '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__new__', '__reduce_ex__', '__reduce__', '__subclasshook__', 
 # '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__']
 
-['_MyExtension__window', '_MyExtension__registered', '__module__', '__all__', 'WINDOW_NAME', 'MENU_PATH', 'on_startup', 
-'on_shutdown', 'dock_with_window', '_MyExtension__set_menu', '_MyExtension__show_window', '_MyExtension__register_scenes', 
-'_MyExtension__unregister_scenes', '__dict__', '__doc__', '__init__', 'startup', 'shutdown', '__new__', '__repr__', '__hash__', 
-'__str__', '__getattribute__', '__setattr__', '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', 
-'__reduce_ex__', '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__']
+# ['_MyExtension__window', '_MyExtension__registered', '__module__', '__all__', 'WINDOW_NAME', 'MENU_PATH', 'on_startup', 
+# 'on_shutdown', 'dock_with_window', '_MyExtension__set_menu', '_MyExtension__show_window', '_MyExtension__register_scenes', 
+# '_MyExtension__unregister_scenes', '__dict__', '__doc__', '__init__', 'startup', 'shutdown', '__new__', '__repr__', '__hash__', 
+# '__str__', '__getattribute__', '__setattr__', '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', 
+# '__reduce_ex__', '__reduce__', '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__']
