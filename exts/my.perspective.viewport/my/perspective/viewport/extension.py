@@ -2,13 +2,14 @@ import omni.ext
 from omni.kit.widget import viewport
 import omni.ui as ui
 from omni.kit.widget.viewport import ViewportWidget
-from pxr import Sdf, Gf
+from pxr import Sdf, Gf, Usd, UsdShade, UsdGeom, UsdLux
 from omni.ui import Workspace
 from  omni.kit.viewport.window.window import ViewportWindow
 from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
 from  omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDropDelegate
 from  omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
 import carb
+
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
 DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
 
@@ -231,6 +232,7 @@ class MyExtension(omni.ext.IExt):
 
 
     def menu_helper(self, x, y, button, modifier, widget):
+        print("what's up")
         if button != 0:
             return
 
@@ -239,8 +241,9 @@ class MyExtension(omni.ext.IExt):
         with self._pushed_menu:
             ui.MenuItem("Perspective", height = 100)
             with ui.Menu("Orthographic"):
-                self.top_orth_proj = ui.MenuItem("Top")
-                self.top_orth_proj.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.top_helper(x, y, a, b, widget))
+                self.top_orth_proj = ui.MenuItem("Top", click_fn = self.top_helper())
+                # self.top_orth_proj.set_mouse_pressed_fn(lambda x, y, a, b, w=self.top_orth_proj: self.top_helper(x, y, a, b, w))
+
                 self.front_orth_proj=ui.MenuItem("Front")
                 self.back_orth_proj=ui.MenuItem("Back")
                 self.left_orth_proj=ui.MenuItem("Left")
@@ -248,50 +251,71 @@ class MyExtension(omni.ext.IExt):
             self.iso = ui.MenuItem("Isometric")
             self.dim = ui.MenuItem("Dimetric")
 
+            
+
         # Show it
         self._pushed_menu.show_at(
             (int)(widget.screen_position_x), (int)(widget.screen_position_y + widget.computed_content_height)
         )
 
         
-    def top_helper(self, x, y, button, modifier, widget):
+    def top_helper(self):
         print('hi')
-        # print(len(self.get_selected_prims()[0]))
+
+        # print(self.get_selected_prims()[0])
         if len(self.get_selected_prims()) != 1 or "Camera" not in str(self.get_selected_prims()[0].GetPath()):
             return
         
         self.stage = omni.usd.get_context().get_stage()
         self.prims = self.stage.GetDefaultPrim().GetChildren()
+
+        prims_to_remove = []
+
         for p in self.prims:
-            if "Camera" in str(p.GetPath()) or "Light" in str(p.GetPath()):
-                self.prims.remove(p)
+            print(self.prims, "prims begin")
+            print(str(p.GetPath()), "path")
+            if p.IsA(UsdGeom.Camera):
+                prims_to_remove.append(p)
+                print("camera")
+            elif p.IsA(UsdLux.Light):
+                print("light")
+                prims_to_remove.append(p)
+            print(self.prims, "prims")
 
-        if self.prims:
-            print(self.prims[0])
-            max_x = self.prims[0].GetAttribute('xformOp:translate').Get()[0]+self.prims[0].GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
-            min_x = self.prims[0].GetAttribute('xformOp:translate').Get()[0]-self.prims[0].GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
-            max_y = self.prims[0].GetAttribute('xformOp:translate').Get()[1]+self.prims[0].GetAttribute('xformOp:scale').Get()[1]*self.prims[0].GetAttribute('size').Get()
-            min_y = self.prims[0].GetAttribute('xformOp:translate').Get()[1]-self.prims[0].GetAttribute('xformOp:scale').Get()[1]*self.prims[0].GetAttribute('size').Get()
-            max_z = self.prims[0].GetAttribute('xformOp:translate').Get()[2]+self.prims[0].GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
-            min_z = self.prims[0].GetAttribute('xformOp:translate').Get()[2]-self.prims[0].GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+        for p in prims_to_remove:
+            self.prims.remove(p)
+
+        print(self.prims, "final prims")
+
+        # if self.prims:
+        #     print(self.prims[0].GetCamera())
+        #     max_x = self.prims[0].GetAttribute('xformOp:translate').Get()[0]+self.prims[0].GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+        #     min_x = self.prims[0].GetAttribute('xformOp:translate').Get()[0]-self.prims[0].GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+        #     max_y = self.prims[0].GetAttribute('xformOp:translate').Get()[1]+self.prims[0].GetAttribute('xformOp:scale').Get()[1]*self.prims[0].GetAttribute('size').Get()
+        #     min_y = self.prims[0].GetAttribute('xformOp:translate').Get()[1]-self.prims[0].GetAttribute('xformOp:scale').Get()[1]*self.prims[0].GetAttribute('size').Get()
+        #     max_z = self.prims[0].GetAttribute('xformOp:translate').Get()[2]+self.prims[0].GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+        #     min_z = self.prims[0].GetAttribute('xformOp:translate').Get()[2]-self.prims[0].GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
 
 
-        if len(self.prims) >1:
-            for p in self.prims:
-                if p.GetAttribute('xformOp:translate').Get()[0]+p.GetAttribute('xformOp:scale').Get()[0] > max_x:
-                    max_x = p.GetAttribute('xformOp:translate').Get()[0]+p.GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
-                if p.GetAttribute('xformOp:translate').Get()[0]-p.GetAttribute('xformOp:scale').Get()[0] < min_x:
-                    min_x = p.GetAttribute('xformOp:translate').Get()[0]-p.GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
-                if p.GetAttribute('xformOp:translate').Get()[2]+p.GetAttribute('xformOp:scale').Get()[2] > max_z:
-                    max_z = p.GetAttribute('xformOp:translate').Get()[2]+p.GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
-                if p.GetAttribute('xformOp:translate').Get()[2]-p.GetAttribute('xformOp:scale').Get()[2] < min_z:
-                    min_z = p.GetAttribute('xformOp:translate').Get()[2]-p.GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+        # if len(self.prims) > 1:
+        #     for p in self.prims:
+        #         if p.GetAttribute('xformOp:translate').Get()[0]+p.GetAttribute('xformOp:scale').Get()[0] > max_x:
+        #             max_x = p.GetAttribute('xformOp:translate').Get()[0]+p.GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+        #         if p.GetAttribute('xformOp:translate').Get()[0]-p.GetAttribute('xformOp:scale').Get()[0] < min_x:
+        #             min_x = p.GetAttribute('xformOp:translate').Get()[0]-p.GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+        #         if p.GetAttribute('xformOp:translate').Get()[2]+p.GetAttribute('xformOp:scale').Get()[2] > max_z:
+        #             max_z = p.GetAttribute('xformOp:translate').Get()[2]+p.GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+        #         if p.GetAttribute('xformOp:translate').Get()[2]-p.GetAttribute('xformOp:scale').Get()[2] < min_z:
+        #             min_z = p.GetAttribute('xformOp:translate').Get()[2]-p.GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
 
 
         
-        camera = self.get_selected_prims()[0]
-        camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d((max_x + min_x)/2,max_y+100,(max_z + min_z)/2))
+        camera = UsdGeom.Camera(self.get_selected_prims()[0])
+        print(type(camera))
+        print(camera.GetCamera())
+        camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d((max_x + min_x)/2,max_y+camera.GetAttribute('focusDistance').Get(),(max_z + min_z)/2))
         camera.GetAttribute('xformOp:rotateYXZ').Set(Gf.Vec3d(-90,0.0,0))
+
 
 
 
