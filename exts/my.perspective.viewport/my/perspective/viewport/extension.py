@@ -1,189 +1,308 @@
 import omni.ext
+from omni.kit.widget import viewport
 import omni.ui as ui
-import omni.kit.commands
-from datetime import datetime as dt
-# from pxr import Sdf, Gf
-
 from omni.kit.widget.viewport import ViewportWidget
+from pxr import Sdf, Gf
+from omni.ui import Workspace
+from  omni.kit.viewport.window.window import ViewportWindow
+from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
+from  omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDropDelegate
+from  omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
+import carb
+DEFAULT_VIEWPORT_NAME = '/exts/view.dup.corn/startup/windowName'
+DEFAULT_VIEWPORT_NO_OPEN = '/exts/view.dup.corn/startup/disableWindowOnLoad'
+
 
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
 # instantiated when extension gets enabled and `on_startup(ext_id)` will be called. Later when extension gets disabled
 # on_shutdown() is called.
-
-
 class MyExtension(omni.ext.IExt):
     # ext_id is current extension id. It can be used with extension manager to query additional information, like where
     # this extension is located on filesystem.
+    __all__ = ['ViewportExtension']
 
-    """"Current Problems:
-        1. the console is giving logs every second. Causation uncelar
-        2. The Cameras does not updates properly. Currently it updates every time a camera is spawned through the 
-        extension, but if changes on camera is done outside the extension. The viewport can't update. ]
-        (adding a update button? checking every tick??)
-    """
+    WINDOW_NAME = "Viewport Perspective"
+    MENU_PATH = f"Window/{WINDOW_NAME}"
 
     def on_startup(self, ext_id):
-        print("[cornell.warm.ext] MyExtension startup")
-        """Making the first window"""
-        self._window = ui.Window("Warm Up", width=500, height=720+20)
-        with self._window.frame:
-            with ui.VStack():
-                ui.Label("Menu", height=30, width=500, alignment=ui.Alignment.CENTER)
-                with ui.CollapsableFrame("Spawns"):
-                    with ui.VStack(height=0):
-                        ui.Button("Spawn Cube", height=30, width=426, clicked_fn=lambda: self.on_click_cube())
-                        ui.Button("Spawn Sphere", height=30, width=426, clicked_fn=lambda: self.on_click_sphere())
-                        ui.Button("Spawn Cylinder", height=30, width=426, clicked_fn=lambda: self.on_click_cylinder())
-                        ui.Button("Spawn Camera", height=30, width=426, clicked_fn=lambda: self.on_click_camera())
-                        ui.Button("Spawn Viewport", height=30, width=426, clicked_fn=lambda: self.setup_viewPort())
-                with ui.CollapsableFrame("Others"):                       
-                    with ui.VStack(height=0):
-                        ui.Button("Get Selected Prims in Console", height=30, width=426, 
-                                  clicked_fn=lambda: self.on_click_get())
-                        ui.Button("Duplicate Selected Prims", height=30, width=426, 
-                                  clicked_fn=lambda: self.on_click_duplicate())
-        
-        self.setup_defaults() # sets up defaults
+        print("[view.dup.corn] MyExtension startup")
 
-    def setup_defaults(self):
-        self.context = omni.usd.get_context()
-        self.stage = self.context.get_stage()
-        self.viewport_widget = None
-        self._window2 = None
-        self.cams=[]
-        self.viewport_api= None
-        self.default()
+        settings = carb.settings.get_settings()
+        default_name = settings.get(DEFAULT_VIEWPORT_NAME) or "Viewport Window"
+        self.WINDOW_NAME = default_name
+        self.MENU_PATH = f'Window/{default_name}'
 
-    def _create_prime(self, type_of_prim :str):
-        attrib = {'radius': 50, 'extent': [(-50, -50, -50), (50, 50, 50)]}
-        if type_of_prim == "Cube":
-            attrib = {'size': 100, 'extent': [(-50, -50, -50), (50, 50, 50)]}
-        elif type_of_prim == "Cylinder":
-            attrib = {'radius': 50, 'height': 100, 'extent': [(-50, -50, -50), (50, 50, 50)]}
-        
-        omni.kit.commands.execute('CreatePrimWithDefaultXform',
-        prim_type =type_of_prim,
-        attributes =attrib)
-   
-    def on_click_cube(self):
-        self._create_prime("Cube")
-        
-    def on_click_sphere(self):
-       self._create_prime("Sphere")
+        self.__window = None
+        self.__registered = None
 
-    def on_click_cylinder(self):
-       
-        self._create_prime('Cylinder')
-       
-    def on_click_camera(self):
-        omni.kit.commands.execute(
-            'CreatePrimWithDefaultXform',
-            prim_type='Camera',
-            attributes={'focusDistance': 400, 'focalLength': 24})
-        """refresh the viewport everytime a new camera is created through the extension"""
-        self.setup_viewPort()
-
-    def helper_selected(self):
-        """returns a list of primitives selected"""
-        return [self.stage.GetPrimAtPath(m) for m in self.helper_selected_path()]
-
-    def helper_selected_path(self):
-        """returns a list of the path of the primitives selected"""
-        return self.context.get_selection().get_selected_prim_paths()
-
-    def helper_all_prims(self):
-        """returns a list of all primitives on stage (Typically default is the World)"""
-        self.context = omni.usd.get_context()
-        self.stage = self.context.get_stage()
-        return self.stage.GetDefaultPrim().GetChildren()
-        
-    def on_click_get(self):
-        """print out the primitive in the console"""
-        for p in self.helper_selected():
-            strp=str(p)
-            print("GET THE PRIM:" + strp)
-
-    def on_click_duplicate(self):
-        """make a duplication of the selected primitive. New primitive name is followed by the date&time"""
-        duprim = self.helper_selected_path()
-        for p in duprim:
-            ct = dt.now()
-            newpath = str(p)+str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)+str(ct.minute)+str(ct.second)+str(ct.microsecond)
-            omni.usd.duplicate_prim(self.stage, p, newpath, True)
-
-    def helper_ret(self, itemmodel, item):
-        #  self.viewport_api.camera_path = str(self.cams[cam_prim].GetPath())
-        # print(str(cam_prim.GetPath()))
-        #old: get the camera path and replace
-        """new: get the selected combobox positional index. 
-        Using the index to get the camera prim in the camera list, then get the path"""
-        cam_index = self.cam_sel.model.get_item_value_model().get_value_as_int()
-        self.viewport_api.camera_path = str(self.cams[cam_index].GetPath())
-
-    def cam_loop(self):
-        """Get all primitives in the stage, and sort out the camera primitives. Cam prims are in a list"""
-        print("cam_loop in progress")
-        
-        self.cams=[]
-
-        for p in self.helper_all_prims():
-            cam = "Camera"
-            if cam in str(p.GetPath()):
-                self.cams.append(p)
-
-    def default(self):
-        """creates three cameras by default, called at the startup (setup_defaults)"""
-        self.on_click_camera()
-        self.on_click_camera()
-        self.on_click_camera()
-        
-           
-    def setup_viewPort(self):
-        """generates a second separate window. The second window appears when spawn viewport is clicked"""
-        self._window2 = ui.Window('Alt Viewport', width=480, height=270+20+30) # Add 20 for the title-bar
-        with self._window2.frame:
-            with ui.VStack():
-                self.viewport_widget = ViewportWidget(resolution=(1280, 720))
-                # Control of the ViewportTexture happens through the object held in the viewport_api property
-                self.viewport_api = self.viewport_widget.viewport_api
-                # We can reduce the resolution of the render easily
-                self.viewport_api.resolution = (640, 360)
-                #default view of viewport
-                self.viewport_api.camera_path = '/World/Camera'
-                self.cam_loop()
-                print(self.cams)
-                self.cam_sel = ui.ComboBox() #creates empty combobox
-                
+        open_window = not settings.get(DEFAULT_VIEWPORT_NO_OPEN)
+        Workspace.set_show_window_fn(self.WINDOW_NAME, lambda b: self.__show_window(None, b))
+        if open_window:
+            Workspace.show_window(self.WINDOW_NAME)
+            if self.__window:
                
-               
+                self.dock_with_window(self.WINDOW_NAME, 'Viewport', omni.ui.DockPosition.SAME)
+        open_window = True if (open_window and self.__window) else False
 
-                #looping through the list of cameras and putting them into the combobox
-                for c in range(len(self.cams)):
-                    strc = str(self.cams[c].GetPath()).split("/")[-1] #get the camera name out of its path
-                    #adds value to combobox as a string
-                    self.cam_sel.model.append_child_item(None, ui.SimpleStringModel(strc)) 
+        editor_menu = omni.kit.ui.get_editor_menu()
+        if editor_menu:
+            self.__menu = editor_menu.add_item(self.MENU_PATH, self.__show_window, toggle=True, value=open_window)
+        
+        self.__registered = self.__register_scenes()
+        self.__default_drag_handlers = (
+            UsdFileDropDelegate('/persistent/app/viewport/previewOnPeek'),
+            UsdShadeDropDelegate(),
+            MaterialFileDropDelegate()
+        )
 
-                #call the helper return method everytime val of combobox changes, so it updates the cam path 
-                self.cam_sel.model.add_item_changed_fn(self.helper_ret)      
-                ui.Button("Update Viewport", height=30, width=426, clicked_fn=lambda: self.helper_update())
+        self._pushed_menu = ui.Menu("Pushed menu")
 
-    def helper_update(self):
-        self.cam_loop()
-        print("help t")
-        # self.cam_sel=ui.ComboBox.destroy() #creates empty combobox
-        self.cam_sel=ui.ComboBox()
-        print(self.cams)
-        # print(dir(self.cam_sel))
-        for c in range(len(self.cams)):
-            strc = str(self.cams[c].GetPath()).split("/")[-1] #get the camera name out of its path
-            #adds value to combobox as a string
-            print(strc)
-            self.cam_sel.model.append_child_item(None, ui.SimpleStringModel(strc)) 
-
- 
 
     def on_shutdown(self):
-        # Don't forget to destroy the objects when done with them
-        self._window,self._window2 =None, None
-        self.viewport_widget = None
-        print("[cornell.warm.ext] MyExtension shutdown")
+        print("[view.dup.corn] MyExtension shutdown")
+        Workspace.set_show_window_fn(self.WINDOW_NAME, None)
+        self.__show_window(None, False)
+        self.__menu = None
+        self.__default_drag_handlers = None
+        if self.__registered:
+            self.__unregister_scenes(self.__registered)
+            self.__registered = None
+
+        from omni.kit.viewport.window.events import set_ui_delegate
+        set_ui_delegate(None)
+
+    def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
+        async def wait_for_window():
+            dockspace = Workspace.get_window(dock_name)
+            print(window_name)
+            window = Workspace.get_window(window_name)
+            if (window is None) or (dockspace is None):
+                frames = 3
+                while ((window is None) or (dockspace is None)) and frames:
+                    await omni.kit.app.get_app().next_update_async()
+                    dockspace = Workspace.get_window(dock_name)
+                    window = Workspace.get_window(window_name)
+                    frames = frames - 1
+
+            if window and dockspace:
+                window.deferred_dock_in(dock_name)
+                # This genrally works in a variety of cases from load, re-load, and save extesnion .py file reload
+                # But it depends on a call order in omni.ui and registered selected_in_dock and dock_changed callbacks.
+                await omni.kit.app.get_app().next_update_async()
+                updates_enabled = window.docked and window.selected_in_dock
+                window.viewport_api.updates_enabled = updates_enabled
+
+        import asyncio
+        asyncio.ensure_future(wait_for_window())
+
+    def __set_menu(self, value):
+        """Set the menu to create this window on and off"""
+        editor_menu = omni.kit.ui.get_editor_menu()
+        if editor_menu:
+            editor_menu.set_value(self.MENU_PATH, value)
+
+    
+    def __show_window(self, menu, visible):
+        self.__set_menu(visible)
+
+        if visible:
+            if not self.__window:
+                # def visiblity_changed(visible):
+                #     self.__set_menu(visible)
+                    # if not visible:
+                    #     self.__show_window(None, False)
+                self.__window = ViewportWindow(self.WINDOW_NAME)
+                self.__window.set_visibility_changed_fn(self.__set_menu)
+                with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
+                    self.view_button = ui.Button("Projections", width = 0, height = 50)
+                    self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
+
+                self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api
+                self.viewport_api.camera_path = Sdf.Path('/World/Camera')
+                self.viewport_api.projection.SetRotate(Gf.Rotation(Gf.Vec3d(1, 0, 1), 60))
+                print(self.viewport_api.projection.ExtractRotationMatrix)
+
+                # print(dir(self.__window.frame))
+                self.cam = []
+                self.stage = omni.usd.get_context().get_stage()
+                prims = self.stage.GetDefaultPrim().GetChildren()
+                print(type(prims[2].GetAttribute('size').Get()))
+                # print(dir(self.stage.GetDefaultPrim()))
+                # for p in prims:
+                #     if "Camera" in str(p.GetPath()):
+                #         self.cam.append(p)
+                # property = self.cam[0].GetProperty('xformOp:rotateYXZ')
+                # print(self.cam[0].GetAttribute('projection').Set("perspective"))
+
+
+        elif self.__window:
+            self.__window.set_visibility_changed_fn(None)
+            self.__window.destroy()
+            self.__window = None
+
+    def __register_scenes(self):
+        def _is_extension_loaded(extension_name: str) -> bool:
+            import omni.kit
+            def is_ext(ext_id: str) -> bool:
+                ext_name = ext_id.split("-")[0]
+                return ext_name == extension_name
+
+            for ext in omni.kit.app.get_app_interface().get_extension_manager().get_extensions():
+                if is_ext(ext['id']):
+                    return ext['enabled']
+            return False
+
+        # Register all of the items that use omni.ui.scene to add functionality
+        from omni.kit.viewport.registry import RegisterScene
+        from omni.kit.viewport.window.scene.scenes import SimpleGrid, SimpleOrigin, CameraAxis
+        registered = [
+            RegisterScene(SimpleOrigin, 'omni.kit.viewport.window.scene.SimpleOrigin'),
+            RegisterScene(CameraAxis, 'omni.kit.viewport.window.scene.CameraAxis')
+        ]
+
+        # Register items to control legacy drawing if it is loaded and available
+        if _is_extension_loaded('omni.kit.viewport.legacy_gizmos'):
+            from omni.kit.viewport.window.scene.legacy import LegacyGridScene, LegacyLightScene, LegacyAudioScene
+            registered += [
+                RegisterScene(LegacyGridScene, 'omni.kit.viewport.window.scene.LegacyGrid'),
+                RegisterScene(LegacyLightScene, 'omni.kit.viewport.window.scene.LegacyLight'),
+                RegisterScene(LegacyAudioScene, 'omni.kit.viewport.window.scene.LegacyAudio')
+            ]
+        else:
+            # Otherwise use omni.scene.ui Grid
+            registered += [
+                RegisterScene(SimpleGrid, 'omni.kit.viewport.window.scene.SimpleGrid')
+            ]
+
+        from omni.kit.viewport.window.manipulator.context_menu import ViewportClickFactory
+        registered += [
+            RegisterScene(ViewportClickFactory, 'omni.kit.viewport.window.manipulator.ContextMenu')
+        ]
+
+        from omni.kit.viewport.window.manipulator.object_click import ObjectClickFactory
+        registered += [
+            RegisterScene(ObjectClickFactory, 'omni.kit.viewport.window.manipulator.ObjectClick')
+        ]
+
+        # Register the Selection manipulator (if available)
+        from omni.kit.viewport.window.manipulator.selection import SelectionManipulatorItem
+        if SelectionManipulatorItem:
+            registered += [
+                RegisterScene(SelectionManipulatorItem, 'omni.kit.viewport.window.manipulator.Selection')
+            ]
+
+        # Register the Camera manipulator (if available)
+        from omni.kit.viewport.window.manipulator.camera import ViewportCameraManiulatorFactory
+        if ViewportCameraManiulatorFactory:
+            registered += [
+                RegisterScene(ViewportCameraManiulatorFactory, 'omni.kit.viewport.window.manipulator.Camera')
+            ]
+
+        from omni.kit.viewport.registry import RegisterViewportLayer
+
+        # Register the HUD stats
+        # XXX Can't do this in testing as the stats will not be consistent across launches
+        if not carb.settings.get_settings().get('/exts/omni.kit.test/runTestsAndQuit'):
+            from omni.kit.viewport.window.stats import ViewportStatsLayer
+            registered.append(RegisterViewportLayer(ViewportStatsLayer, 'omni.kit.viewport.window.ViewportStats'))
+
+        # Finally register the ViewportSceneLayer
+        from omni.kit.viewport.window.scene.layer import ViewportSceneLayer
+        registered.append(RegisterViewportLayer(ViewportSceneLayer, 'omni.kit.viewport.window.SceneLayer'))
+        return registered
+
+    def __unregister_scenes(self, registered):
+        for item in registered:
+            try:
+                item.destroy()
+            except Exception:
+                pass
+
+
+
+    
+    def get_selected_prims(self):
+        context = omni.usd.get_context()
+        stage = context.get_stage()
+        prims = [stage.GetPrimAtPath(m) for m in context.get_selection().get_selected_prim_paths()]
+        return prims
+
+
+
+
+    def menu_helper(self, x, y, button, modifier, widget):
+        if button != 0:
+            return
+
+        # Reset the previous context popup
+        self._pushed_menu.clear()
+        with self._pushed_menu:
+            ui.MenuItem("Perspective", height = 100)
+            with ui.Menu("Orthographic"):
+                self.top_orth_proj = ui.MenuItem("Top", click_fn = self.top_helper())
+                # self.top_orth_proj.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.top_helper(x, y, a, b, widget))
+                self.front_orth_proj=ui.MenuItem("Front")
+                self.back_orth_proj=ui.MenuItem("Back")
+                self.left_orth_proj=ui.MenuItem("Left")
+                self.right_orth_proj=ui.MenuItem("Right")
+            self.iso = ui.MenuItem("Isometric")
+            self.dim = ui.MenuItem("Dimetric")
+
+        # Show it
+        self._pushed_menu.show_at(
+            (int)(widget.screen_position_x), (int)(widget.screen_position_y + widget.computed_content_height)
+        )
+
+        
+    def top_helper(self):
+        print('hi')
+        # print(len(self.get_selected_prims()[0]))
+        if len(self.get_selected_prims()) != 1 or "Camera" not in str(self.get_selected_prims()[0].GetPath()):
+            return
+        
+        self.stage = omni.usd.get_context().get_stage()
+        self.prims = self.stage.GetDefaultPrim().GetChildren()
+        print(self.stage.GetDefaultPrim().GetChildren())
+        dp=self.prims.copy()
+        for p in range(len(dp)):
+            print(dp[p].GetPath())
+            if "Light" in str(dp[p].GetPath()) or "Camera" in str(dp[p].GetPath()):
+                print(dp[p])
+                # print(self.prims[p])
+                self.prims.remove(dp[p])
+        
+        if self.prims:
+            print(self.prims)
+            print(self.prims[0].GetProperties())
+            max_x = self.prims[0].GetAttribute('xformOp:translate').Get()[0]+self.prims[0].GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+            min_x = self.prims[0].GetAttribute('xformOp:translate').Get()[0]-self.prims[0].GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+            max_y = self.prims[0].GetAttribute('xformOp:translate').Get()[1]+self.prims[0].GetAttribute('xformOp:scale').Get()[1]*self.prims[0].GetAttribute('size').Get()
+            min_y = self.prims[0].GetAttribute('xformOp:translate').Get()[1]-self.prims[0].GetAttribute('xformOp:scale').Get()[1]*self.prims[0].GetAttribute('size').Get()
+            max_z = self.prims[0].GetAttribute('xformOp:translate').Get()[2]+self.prims[0].GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+            min_z = self.prims[0].GetAttribute('xformOp:translate').Get()[2]-self.prims[0].GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+
+            # [Usd.Prim(</World/Cone>).GetAttribute('accelerations'), Usd.Prim(</World/Cone>).GetAttribute('cornerIndices'), Usd.Prim(</World/Cone>).GetAttribute('cornerSharpnesses'), Usd.Prim(</World/Cone>).GetAttribute('creaseIndices'), Usd.Prim(</World/Cone>).GetAttribute('creaseLengths'), Usd.Prim(</World/Cone>).GetAttribute('creaseSharpnesses'), Usd.Prim(</World/Cone>).GetAttribute('doubleSided'), Usd.Prim(</World/Cone>).GetAttribute('extent'), Usd.Prim(</World/Cone>).GetAttribute('faceVaryingLinearInterpolation'), Usd.Prim(</World/Cone>).GetAttribute('faceVertexCounts'), Usd.Prim(</World/Cone>).GetAttribute('faceVertexIndices'), Usd.Prim(</World/Cone>).GetAttribute('holeIndices'), Usd.Prim(</World/Cone>).GetAttribute('interpolateBoundary'), Usd.Prim(</World/Cone>).GetAttribute('normals'), Usd.Prim(</World/Cone>).GetAttribute('orientation'), Usd.Prim(</World/Cone>).GetAttribute('points'), Usd.Prim(</World/Cone>).GetAttribute('primvars:displayColor'), Usd.Prim(</World/Cone>).GetAttribute('primvars:displayOpacity'), Usd.Prim(</World/Cone>).GetAttribute('primvars:st'), Usd.Prim(</World/Cone>).GetRelationship('proxyPrim'), Usd.Prim(</World/Cone>).GetAttribute('purpose'), Usd.Prim(</World/Cone>).GetAttribute('subdivisionScheme'), Usd.Prim(</World/Cone>).GetAttribute('triangleSubdivisionRule'), Usd.Prim(</World/Cone>).GetAttribute('velocities'), Usd.Prim(</World/Cone>).GetAttribute('visibility'), Usd.Prim(</World/Cone>).GetAttribute('xformOp:rotateXYZ'), Usd.Prim(</World/Cone>).GetAttribute('xformOp:scale'), Usd.Prim(</World/Cone>).GetAttribute('xformOp:translate'), Usd.Prim(</World/Cone>).GetAttribute('xformOpOrder')]
+
+
+
+        if len(self.prims) >1:
+            for p in self.prims:
+                if p.GetAttribute('xformOp:translate').Get()[0]+p.GetAttribute('xformOp:scale').Get()[0] > max_x:
+                    max_x = p.GetAttribute('xformOp:translate').Get()[0]+p.GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+                if p.GetAttribute('xformOp:translate').Get()[0]-p.GetAttribute('xformOp:scale').Get()[0] < min_x:
+                    min_x = p.GetAttribute('xformOp:translate').Get()[0]-p.GetAttribute('xformOp:scale').Get()[0]*self.prims[0].GetAttribute('size').Get()
+                if p.GetAttribute('xformOp:translate').Get()[2]+p.GetAttribute('xformOp:scale').Get()[2] > max_z:
+                    max_z = p.GetAttribute('xformOp:translate').Get()[2]+p.GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+                if p.GetAttribute('xformOp:translate').Get()[2]-p.GetAttribute('xformOp:scale').Get()[2] < min_z:
+                    min_z = p.GetAttribute('xformOp:translate').Get()[2]-p.GetAttribute('xformOp:scale').Get()[2]*self.prims[0].GetAttribute('size').Get()
+
+
+        
+        camera = self.get_selected_prims()[0]
+        camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d((max_x + min_x)/2,max_y+100,(max_z + min_z)/2))
+        camera.GetAttribute('xformOp:rotateYXZ').Set(Gf.Vec3d(-90,0.0,0))
+
+
+   
+
+
