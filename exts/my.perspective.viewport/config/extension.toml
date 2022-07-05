@@ -30,6 +30,6 @@ name = "my.perspective.viewport"
 [settings]
 # Default to "Viewport Next" in case legacy viewport is also loaded
 # clients should be able to override this when they know that its not.
-exts."my.perspective.vireport".startup.windowName="Viewport Perspective"
+exts."my.perspective.viewport".startup.windowName="Viewport Perspective"
 # Setting to disable opening a Window instance when loaded
-exts."my.perspective.vireport".startup.disableWindowOnLoad=false
+exts."my.perspective.viewport".startup.disableWindowOnLoad=false

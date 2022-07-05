@@ -9,6 +9,7 @@ from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDro
 from  omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDropDelegate
 from  omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
 import carb
+import math
 
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
 DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
@@ -241,9 +242,8 @@ class MyExtension(omni.ext.IExt):
         with self._pushed_menu:
             ui.MenuItem("Perspective", height = 100)
             with ui.Menu("Orthographic"):
-                self.top_orth_proj = ui.MenuItem("Top", click_fn = self.top_helper())
+                self.top_orth_proj = ui.MenuItem("Top", clicked_fn=self.iso_helper())
                 # self.top_orth_proj.set_mouse_pressed_fn(lambda x, y, a, b, w=self.top_orth_proj: self.top_helper(x, y, a, b, w))
-
                 self.front_orth_proj=ui.MenuItem("Front")
                 self.back_orth_proj=ui.MenuItem("Back")
                 self.left_orth_proj=ui.MenuItem("Left")
@@ -310,12 +310,109 @@ class MyExtension(omni.ext.IExt):
 
 
         
-        camera = UsdGeom.Camera(self.get_selected_prims()[0])
-        print(type(camera))
-        print(camera.GetCamera())
-        camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d((max_x + min_x)/2,max_y+camera.GetAttribute('focusDistance').Get(),(max_z + min_z)/2))
-        camera.GetAttribute('xformOp:rotateYXZ').Set(Gf.Vec3d(-90,0.0,0))
+        camera = self.get_selected_prims()[0]
+        usd_camera = UsdGeom.Camera(self.get_selected_prims()[0])
+        frustum = Gf.Frustum(usd_camera.GetCamera().transform, Gf.Range2d(Gf.Vec2d(-2.5, 2.5), Gf.Vec2d(-2.5, 2.5)), Gf.Range1d(0, 100), Gf.Frustum.Orthographic)
+        print(self.frustum)
+        print(usd_camera.GetCamera().frustum.ComputeProjectionMatrix(), "window")
+        print(usd_camera.GetCamera().SetOrthographicFromAspectRatioAndSize(16/9, 500, Gf.Camera.FOVHorizontal))
+        print(camera.GetAttribute('xformOp:rotateYXZ').Get())
+        print(camera.GetAttribute('xformOp:translate').Get())
+
+        x_ang = camera.GetAttribute('xformOp:rotateYXZ').Get()[0]
+        y_ang = camera.GetAttribute('xformOp:rotateYXZ').Get()[1]
+        z_ang = camera.GetAttribute('xformOp:rotateYXZ').Get()[2]
+
+        print("x:", x_ang)
+        print("y:", y_ang)
+        print("z:", z_ang)
+
+        cam_origin = Gf.Matrix4d(
+            (1, 0, 0, 0),
+            (0, 1, 0, 0),
+            (0, 0, -1, 0),
+            (0, 0, 0, 1)
+        )
+
+        x_rot = Gf.Matrix4d(
+            (1, 0, 0, 0),
+            (0, math.cos(x_ang/180*math.pi), -math.sin(x_ang/180*math.pi), 0),
+            (0, math.sin(x_ang/180*math.pi), math.cos(x_ang/180*math.pi), 0),
+            (0, 0, 0, 1)
+        )
+
+        print("x_rot", x_rot)
+
+        y_rot = Gf.Matrix4d(
+            (math.cos(y_ang/180*math.pi), 0, math.sin(y_ang/180*math.pi), 0),
+            (0, 1, 0, 0),
+            (-math.sin(y_ang/180*math.pi), 0, math.cos(y_ang/180*math.pi), 0),
+            (0, 0, 0, 1)
+        )
+
+        print("y rot",y_rot)
+
+        z_rot = Gf.Matrix4d(
+            (math.cos(z_ang/180*math.pi), math.sin(z_ang/180*math.pi), 0, 0),
+            (-math.sin(z_ang/180*math.pi), math.cos(z_ang/180*math.pi), 0, 0),
+            (0, 0, -1, 0),
+            (0, 0, 0, 1)
+        )
+
+        print("z rot",z_rot)
+
+        cam_axis = z_rot*y_rot*x_rot*cam_origin
 
 
 
+        print(cam_axis)
+        print(usd_camera.GetCamera().transform)
+        point_x = Gf.Vec4d(1, 0, 0, 1)
+        point_y = Gf.Vec4d(0, 1, 0, 1)
+        point_z = Gf.Vec4d(0, 0, 1, 1)
+        print(usd_camera.GetCamera().transform*point_x, "camera coodrinate x")
+        print(usd_camera.GetCamera().transform*point_y, "camera coodrinate y")
+        print(usd_camera.GetCamera().transform*point_z, "camera coodrinate z")
 
+        # camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d((max_x + min_x)/2,max_y+camera.GetAttribute('focusDistance').Get(),(max_z + min_z)/2))
+        # camera.GetAttribute('xformOp:rotateYXZ').Set(Gf.Vec3d(-90,0.0,0))
+
+
+    def iso_helper(self):
+        forward = Gf.Vec3f(1/math.sqrt(3),1/math.sqrt(3),-1/math.sqrt(3))
+        right = Gf.Cross(Gf.Vec3f(0,1,0),forward)
+        up = Gf.Cross(forward, right)
+        Gf.Normalize(right)
+        Gf.Normalize(up)
+        
+        print(forward, "forward")
+        print(up, "up")
+        print(right, "right")
+        rot_matrix = Gf.Matrix4d(
+            (right[0],right[1],right[2],0),
+            (up[0],up[1],up[2],0),
+            (forward[0],forward[1],forward[2],0),
+            (0,0,0,1)
+        )
+        print(rot_matrix, "rotational matrix")
+
+        camera = self.get_selected_prims()[0]
+        position = camera.GetAttribute('xformOp:translate').Get()
+        usd_camera = UsdGeom.Camera(camera)
+        print(type(usd_camera.GetCamera()))
+
+        translation_matrix = Gf.Matrix4d(
+            (1, 0, 0, -position[0]),
+            (0, 1, 0, -position[1]),
+            (0, 0, 1, -position[2]),
+            (0, 0, 0, 1)
+        )
+
+        transform_matrix = rot_matrix*translation_matrix
+        
+        print(usd_camera.GetCamera().transform)
+        UsdGeom.Xformable(camera).ClearXformOpOrder()
+        print(camera.GetAttribute('xformOp:transform').Get())
+        UsdGeom.Xformable(camera).AddTransformOp().Set(transform_matrix)
+        print(usd_camera.GetCamera().transform)
+        print(camera.GetAttribute('xformOp:transform').Get())
