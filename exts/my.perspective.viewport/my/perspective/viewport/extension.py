@@ -233,12 +233,15 @@ class MyExtension(omni.ext.IExt):
         if button != 0:
             return
 
+        self.stage = omni.usd.get_context().get_stage()
+        self.prims = self.stage.GetDefaultPrim().GetChildren()
+
         # Reset the previous context popup
         self._pushed_menu.clear()
         with self._pushed_menu:
             with ui.Menu("Camera Selection"):
-                for c in range(len(self.camera_sel())):
-                    ui.MenuItem(self.camera_sel()[c].GetName(), triggered_fn=lambda argum=c: self.cam_sel_helper(argum))
+                for c in range(len(self.camera_sel(self.prims))):
+                    ui.MenuItem(self.camera_sel(self.prims)[c].GetName(), triggered_fn=lambda argum=c: self.cam_sel_helper(argum))
                     
             ui.MenuItem("Add targets",triggered_fn=lambda: self.add_target_helper())
             with ui.Menu('target'):
@@ -260,15 +263,12 @@ class MyExtension(omni.ext.IExt):
             
             self.dim = ui.MenuItem("Dimetric")
 
-            
-
         # Show it
         self._pushed_menu.show_at(
             (int)(widget.screen_position_x), (int)(widget.screen_position_y + widget.computed_content_height)
         )
        
     def ortho_helper(self, option:str):
-
         camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
         self.stage = omni.usd.get_context().get_stage()
         self.prims = self.stage.GetDefaultPrim().GetChildren()
@@ -384,24 +384,19 @@ class MyExtension(omni.ext.IExt):
         camera.GetAttribute('horizontalAperture').Set(10)
         camera.GetAttribute('verticalAperture').Set(10)
 
-    def camera_sel(self):
-        self.stage = omni.usd.get_context().get_stage()
-        print(dir(self.stage))
-        self.prims = self.stage.GetDefaultPrim().GetChildren()
-
+    def camera_sel(self, list):
         cameras = []
-
-        for p in self.prims:
-            
+        for p in list:
             if p.IsA(UsdGeom.Camera):
                 cameras.append(p)
-
+            if p.GetChildren():
+                cameras.extend(self.camera_sel(p.GetChildren()))
+        
         return cameras
 
+
     def cam_sel_helper(self, index):
-        print(index)
-        print(self.camera_sel()[index])
-        self.viewport_api.camera_path = self.camera_sel()[index].GetPath()
+        self.viewport_api.camera_path = self.camera_sel(self.prims)[index].GetPath()
 
     def add_target_helper(self):
         self._window2 = ui.Window("Add Targets", width = 400, height = 300)
