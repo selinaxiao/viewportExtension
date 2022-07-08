@@ -1,10 +1,6 @@
-from ctypes import alignment
 import omni.ext
-from omni.kit.widget import viewport
 import omni.ui as ui
-from omni.kit.widget.viewport import ViewportWidget
-from omni.usd._impl.utils import get_prim_at_path
-from pxr import Sdf, Gf, Usd, UsdShade, UsdGeom, UsdLux
+from pxr import Sdf, Gf, UsdGeom, UsdLux
 from omni.ui import Workspace
 from  omni.kit.viewport.window.window import ViewportWindow
 from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
@@ -12,6 +8,9 @@ from  omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDr
 from  omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
 import carb
 import math
+from omni.kit.window.toolbar import SimpleToolButton
+import os
+from carb.input import KeyboardInput as Key
 
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
 DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
@@ -62,9 +61,55 @@ class MyExtension(omni.ext.IExt):
         )
 
         self._pushed_menu = ui.Menu("Pushed menu")
+
+
+        ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
+        icon_path = os.path.join(ext_path, "icons")
+
+        self._toolbar = omni.kit.window.toolbar.get_instance()
+
+        self._zoning_envolope = SimpleToolButton(name="Zoning Envolope",
+            tooltip="Zoning Envolope",
+            icon_path=f"{icon_path}/envolope_icon.png",
+            icon_checked_path=f"{icon_path}/envolope_icon.png",
+            # hotkey=Key.L,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+
+        self._projection_icon = SimpleToolButton(name="Projection",
+            tooltip="Top/ Front/ Side/ Iso",
+            icon_path=f"{icon_path}/projection_icon.png",
+            icon_checked_path=f"{icon_path}/projection_icon.png",
+            # hotkey=Key.L,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+
+        self._camera_icon = SimpleToolButton(name="Texture/ Strretview",
+            tooltip="Not Decided",
+            icon_path=f"{icon_path}/camera_icon.png",
+            icon_checked_path=f"{icon_path}/camera_icon.png",
+            # hotkey=Key.L,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
         
+        self._sun_study = SimpleToolButton(name="Sun Study",
+            tooltip="Sun Study",
+            icon_path=f"{icon_path}/sun_icon.png",
+            icon_checked_path=f"{icon_path}/sun_icon.png",
+            # hotkey=Key.L,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+        
+        self._wind_sim = SimpleToolButton(name="Wind Simulation",
+            tooltip="Wind Simulation",
+            icon_path=f"{icon_path}/wind_icon.png",
+            icon_checked_path=f"{icon_path}/wind_icon.png",
+            # hotkey=Key.L,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
 
 
+        self._toolbar.add_widget(self._zoning_envolope, 800)
+        self._toolbar.add_widget(self._projection_icon, 900)
+        self._toolbar.add_widget(self._camera_icon, 1000)
+        self._toolbar.add_widget(self._sun_study, 1100)
+        self._toolbar.add_widget(self._wind_sim, 1200)
+      
     def on_shutdown(self):
         print("[my.perspective.viewport] MyExtension shutdown")
         Workspace.set_show_window_fn(self.WINDOW_NAME, None)
@@ -77,6 +122,25 @@ class MyExtension(omni.ext.IExt):
 
         from omni.kit.viewport.window.events import set_ui_delegate
         set_ui_delegate(None)
+
+        self._toolbar.remove_widget(self._zoning_envolope)
+        self._toolbar.remove_widget(self._projection_icon)
+        self._toolbar.remove_widget(self._camera_icon)
+        self._toolbar.remove_widget(self._sun_study)
+        self._toolbar.remove_widget(self._wind_sim)
+        self._zoning_envolope.clean()
+        self._zoning_envolope = None
+        self._projection_icon.clean()
+        self._projection_icon = None
+        self._camera_icon.clean()
+        self._camera_icon = None
+        self._sun_study.clean()
+        self._sun_study = None
+        self._wind_sim.clean()
+        self._wind_sim = None
+        self._toolbar = None
+
+
 
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
         async def wait_for_window():
@@ -122,6 +186,7 @@ class MyExtension(omni.ext.IExt):
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
                     self.view_button = ui.Button("Projections", width = 0, height = 50)
                     self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
+                    # ui.IntSlider(min=0, max=4, width = 500, x = 500, y = 500)
 
 
                 self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api        
@@ -222,6 +287,9 @@ class MyExtension(omni.ext.IExt):
             except Exception:
                 pass
     
+
+
+
     def get_selected_prims(self):
         context = omni.usd.get_context()
         stage = context.get_stage()
@@ -244,10 +312,7 @@ class MyExtension(omni.ext.IExt):
                     ui.MenuItem(self.camera_sel(self.prims)[c].GetName(), triggered_fn=lambda argum=c: self.cam_sel_helper(argum))
                     
             ui.MenuItem("Add targets",triggered_fn=lambda: self.add_target_helper())
-            with ui.Menu('target'):
-                ui.MenuItem("hi", checkable = True)
-                
-                
+
             ui.MenuItem("Perspective", height = 100,triggered_fn=lambda: self.orth_to_persp())
 
             with ui.Menu("Orthographic"):
@@ -277,31 +342,25 @@ class MyExtension(omni.ext.IExt):
         prims_to_remove = []
 
         for p in self.prims:
-            # print(self.prims, "prims begin")
-            # print(str(p.GetPath()), "path")
             if p.IsA(UsdGeom.Camera):
                 prims_to_remove.append(p)
-                # print("camera")
             elif p.IsA(UsdLux.Light):
-                # print("light")
                 prims_to_remove.append(p)
-            # print(self.prims, "prims")
 
         for p in prims_to_remove:
             self.prims.remove(p)
 
         # print(self.prims, "final prims")
 
+
         if not targets:
+            print('no targets')
             if self.prims:
                 x_pos, y_pos, z_pos = 0 , 0, 0 
                 for p in self.prims:
                     x_pos = x_pos+p.GetAttribute('xformOp:translate').Get()[0]
                     y_pos = y_pos+p.GetAttribute('xformOp:translate').Get()[1]
                     z_pos = z_pos+p.GetAttribute('xformOp:translate').Get()[2]
-
-            
-
             if option == "top":
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(self.prims),y_pos/len(self.prims)+camera.GetAttribute('focusDistance').Get(),z_pos/len(self.prims)))
                 camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(-90,0.0,0))
@@ -311,8 +370,10 @@ class MyExtension(omni.ext.IExt):
             elif option == "right":
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(self.prims)+camera.GetAttribute('focusDistance').Get(),y_pos/len(self.prims),z_pos/len(self.prims)))
                 camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,90,0))
+
         else:
             x_pos, y_pos, z_pos = 0,0,0
+            print('targets',targets)
             for p in targets:
                 x_pos = x_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[0]
                 y_pos = y_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[1]
@@ -394,7 +455,6 @@ class MyExtension(omni.ext.IExt):
         
         return cameras
 
-
     def cam_sel_helper(self, index):
         self.viewport_api.camera_path = self.camera_sel(self.prims)[index].GetPath()
 
@@ -406,4 +466,3 @@ class MyExtension(omni.ext.IExt):
                     ui.Label("hi", alignment = ui.Alignment.LEFT_TOP)
                     ui.CheckBox()
            
-
