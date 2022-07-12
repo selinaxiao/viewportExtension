@@ -61,7 +61,7 @@ class MyExtension(omni.ext.IExt):
         )
 
         self._pushed_menu = ui.Menu("Pushed menu")
-
+        self.target_count = 0
 
         ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
         icon_path = os.path.join(ext_path, "icons")
@@ -72,35 +72,35 @@ class MyExtension(omni.ext.IExt):
             tooltip="Zoning Envolope",
             icon_path=f"{icon_path}/envolope_icon.png",
             icon_checked_path=f"{icon_path}/envolope_icon.png",
-            # hotkey=Key.L,
+            hotkey=Key.Z,
             toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
 
         self._projection_icon = SimpleToolButton(name="Projection",
             tooltip="Top/ Front/ Side/ Iso",
             icon_path=f"{icon_path}/projection_icon.png",
             icon_checked_path=f"{icon_path}/projection_icon.png",
-            # hotkey=Key.L,
+            hotkey=Key.P,
             toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
 
         self._camera_icon = SimpleToolButton(name="Texture/ Strretview",
             tooltip="Not Decided",
             icon_path=f"{icon_path}/camera_icon.png",
             icon_checked_path=f"{icon_path}/camera_icon.png",
-            # hotkey=Key.L,
+            hotkey=Key.T,
             toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
         
         self._sun_study = SimpleToolButton(name="Sun Study",
             tooltip="Sun Study",
             icon_path=f"{icon_path}/sun_icon.png",
             icon_checked_path=f"{icon_path}/sun_icon.png",
-            # hotkey=Key.L,
+            hotkey=Key.S,
             toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
         
         self._wind_sim = SimpleToolButton(name="Wind Simulation",
             tooltip="Wind Simulation",
             icon_path=f"{icon_path}/wind_icon.png",
             icon_checked_path=f"{icon_path}/wind_icon.png",
-            # hotkey=Key.L,
+            hotkey=Key.W,
             toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
 
 
@@ -139,6 +139,8 @@ class MyExtension(omni.ext.IExt):
         self._wind_sim.clean()
         self._wind_sim = None
         self._toolbar = None
+
+        self.target_count = 0
 
 
 
@@ -184,6 +186,7 @@ class MyExtension(omni.ext.IExt):
                 self.__window = ViewportWindow(self.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(self.__set_menu)
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
+                    # self.slider()
                     self.view_button = ui.Button("Projections", width = 0, height = 50)
                     self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
                     # ui.IntSlider(min=0, max=4, width = 500, x = 500, y = 500)
@@ -308,8 +311,9 @@ class MyExtension(omni.ext.IExt):
         self._pushed_menu.clear()
         with self._pushed_menu:
             with ui.Menu("Camera Selection"):
-                for c in range(len(self.camera_sel(self.prims))):
-                    ui.MenuItem(self.camera_sel(self.prims)[c].GetName(), triggered_fn=lambda argum=c: self.cam_sel_helper(argum))
+                for c in self.camera_sel(self.prims):
+                    ui.MenuItem(c.GetName(), tooltip=str(c.GetPath()), triggered_fn=lambda argum=c: self.cam_sel_helper(argum))
+                # tooltip not successful, need debugging
                     
             ui.MenuItem("Add targets",triggered_fn=lambda: self.add_target_helper())
 
@@ -352,84 +356,141 @@ class MyExtension(omni.ext.IExt):
 
         # print(self.prims, "final prims")
 
+        target_pos = self.current_target.GetAttribute('xformOp:translate').Get()
+        x_pos = target_pos[0]
+        y_pos = target_pos[1]
+        z_pos = target_pos[2]
 
-        if not targets:
-            print('no targets')
-            if self.prims:
-                x_pos, y_pos, z_pos = 0 , 0, 0 
-                for p in self.prims:
-                    x_pos = x_pos+p.GetAttribute('xformOp:translate').Get()[0]
-                    y_pos = y_pos+p.GetAttribute('xformOp:translate').Get()[1]
-                    z_pos = z_pos+p.GetAttribute('xformOp:translate').Get()[2]
-            if option == "top":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(self.prims),y_pos/len(self.prims)+camera.GetAttribute('focusDistance').Get(),z_pos/len(self.prims)))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(-90,0.0,0))
-            elif option == "front":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(self.prims),y_pos/len(self.prims),z_pos/len(self.prims)+camera.GetAttribute('focusDistance').Get()))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,0))
-            elif option == "right":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(self.prims)+camera.GetAttribute('focusDistance').Get(),y_pos/len(self.prims),z_pos/len(self.prims)))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,90,0))
-
-        else:
-            x_pos, y_pos, z_pos = 0,0,0
-            print('targets',targets)
-            for p in targets:
-                x_pos = x_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[0]
-                y_pos = y_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[1]
-                z_pos = z_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[2]
-
-            if option == "top":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets),y_pos/len(targets)+camera.GetAttribute('focusDistance').Get(),z_pos/len(targets)))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(-90,0.0,0))
-            elif option == "front":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets),y_pos/len(targets),z_pos/len(targets)+camera.GetAttribute('focusDistance').Get()))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,0))
-            elif option == "right":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets)+camera.GetAttribute('focusDistance').Get(),y_pos/len(targets),z_pos/len(targets)))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,90,0))
+        if option == "top":
+            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets),y_pos/len(targets)+camera.GetAttribute('focusDistance').Get(),z_pos/len(targets)))
+            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(-90,0.0,0))
+        elif option == "front":
+            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets),y_pos/len(targets),z_pos/len(targets)+camera.GetAttribute('focusDistance').Get()))
+            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,0))
+        elif option == "right":
+            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets)+camera.GetAttribute('focusDistance').Get(),y_pos/len(targets),z_pos/len(targets)))
+            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,90,0))
 
         self.persp_to_orth()
 
     def iso_helper(self, angle:str):
         camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
-        targets = camera.GetRelationship('proxyPrim').GetTargets()
-
-        x_pos, y_pos, z_pos = 0,0,0
-        if targets:
-            for p in targets:
-                x_pos = x_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[0]
-                y_pos = y_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[1]
-                z_pos = z_pos+omni.usd.get_prim_at_path(p).GetAttribute('xformOp:translate').Get()[2]
+        target_pos = self.current_target.GetAttribute('xformOp:translate').Get()
+        x_pos = target_pos[0]
+        y_pos = target_pos[1]
+        z_pos = target_pos[2]
 
         order = UsdGeom.Xformable(camera).GetOrderedXformOps()
         order_list = []
         for a in order:
             order_list.append(a.GetOpName())
         
-        if 'xformOp:rotateXYZ' not in order_list:
+        # print(order_list)
+        
+        if 'xformOp:rotateXYZ' not in order_list and 'xformOp:transform' not in order_list:
             omni.kit.commands.execute('ChangeRotationOp',
             src_op_attr_path=Sdf.Path(str(camera.GetPath())+"."+UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()),
             op_name=UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName(),
             dst_op_attr_name='xformOp:rotateXYZ',
             is_inverse_op=False)
 
-        if angle == "NW":
-            print("NW")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/max(1,len(targets))+1000, y_pos/max(1,len(targets))+1000, z_pos/max(1,len(targets))+1000))
-            camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(-180*math.atan(1/math.sqrt(2))/math.pi,45,0))
-        elif angle == "NE":
-            print("NE")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/max(1,len(targets))-1000, y_pos/max(1,len(targets))+1000, z_pos/max(1,len(targets))+1000))
-            camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(-180*math.atan(1/math.sqrt(2))/math.pi,315,0))
-        elif angle == "SE":
-            print("SE")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/max(1,len(targets))-1000, y_pos/max(1,len(targets))+1000, z_pos/max(1,len(targets))-1000))
-            camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(-180*math.atan(1/math.sqrt(2))/math.pi,225,0))
-        elif angle == "SW":
-            print("SW")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/max(1,len(targets))+1000, y_pos/max(1,len(targets))+1000, z_pos/max(1,len(targets))-1000))
-            camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(-180*math.atan(1/math.sqrt(2))/math.pi,135,0))
+        if 'xformOp:transform' not in order_list:
+
+            if angle == "NW":
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-1000, y_pos+1000, z_pos+1000))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,225))
+            elif angle == "NE":
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+1000, y_pos+1000, z_pos+1000))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,135))
+            elif angle == "SE":
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+1000, y_pos-1000, z_pos+1000))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,45))
+            elif angle == "SW":
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-1000, y_pos-1000, z_pos+1000))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,315))
+        
+        else:
+            print("pass in transform matrix")
+            print("prev transform matrix", camera.GetAttribute('xformOp:transform').Get())
+            x_rot = Gf.Matrix4d(
+                (1, 0, 0, 0),
+                (0, math.cos(math.pi/2-math.atan(1/math.sqrt(2))), -math.sin(math.pi/2-math.atan(1/math.sqrt(2))), 0),
+                (0, math.sin(math.pi/2-math.atan(1/math.sqrt(2))), math.cos(math.pi/2-math.atan(1/math.sqrt(2))), 0), 
+                (0, 0, 0, 1)
+                )
+
+            if angle == "NW":
+                z_rot = Gf.Matrix4d(
+                (math.cos(225*math.pi/180), -math.sin(225*math.pi/180), 0, 0),
+                (math.sin(225*math.pi/180), math.cos(225*math.pi/180), 0, 0),
+                (0, 0, 1, 0),
+                (0, 0, 0, 1)
+                )
+
+                translate_matrix = Gf.Matrix4d(
+                (1, 0, 0, 0),
+                (0, 1, 0, 0),
+                (0, 0, 1, 0),
+                (x_pos-1000, y_pos+1000, z_pos+1000, 1)
+                )
+
+                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
+                print('after NW transform matrix', camera.GetAttribute('xformOp:transform').Get())
+
+            elif angle == "NE":
+                z_rot = Gf.Matrix4d(
+                (math.cos(135*math.pi/180), -math.sin(135*math.pi/180), 0, 0),
+                (math.sin(135*math.pi/180), math.cos(135*math.pi/180), 0, 0),
+                (0, 0, 1, 0),
+                (0, 0, 0, 1)
+                )
+
+                translate_matrix = Gf.Matrix4d(
+                (1, 0, 0, 0),
+                (0, 1, 0, 0),
+                (0, 0, 1, 0),
+                (x_pos+1000, y_pos+1000, z_pos+1000, 1)
+                )
+
+                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
+                print('after NE transform matrix', camera.GetAttribute('xformOp:transform').Get())
+
+            elif angle == "SE":
+                z_rot = Gf.Matrix4d(
+                (math.cos(45*math.pi/180), -math.sin(45*math.pi/180), 0, 0),
+                (math.sin(45*math.pi/180), math.cos(45*math.pi/180), 0, 0),
+                (0, 0, 1, 0),
+                (0, 0, 0, 1)
+                )
+
+                translate_matrix = Gf.Matrix4d(
+                (1, 0, 0, 0),
+                (0, 1, 0, 0),
+                (0, 0, 1, 0),
+                (x_pos+1000, y_pos-1000, z_pos+1000, 1)
+                )
+
+                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
+                print('after SE transform matrix', camera.GetAttribute('xformOp:transform').Get())
+
+            elif angle == "SW":
+                z_rot = Gf.Matrix4d(
+                (math.cos(315*math.pi/180), -math.sin(315*math.pi/180), 0, 0),
+                (math.cos(315*math.pi/180), math.sin(315*math.pi/180), 0, 0),
+                (0, 0, 1, 0),
+                (0, 0, 0, 1)
+                )
+
+                translate_matrix = Gf.Matrix4d(
+                (1, 0, 0, 0),
+                (0, 1, 0, 0),
+                (0, 0, 1, 0),
+                (x_pos-1000, y_pos-1000, z_pos+1000, 1)
+                )
+                
+                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
+                print('after SW transform matrix', camera.GetAttribute('xformOp:transform').Get())
+
 
         self.persp_to_orth()
     
@@ -455,14 +516,96 @@ class MyExtension(omni.ext.IExt):
         
         return cameras
 
-    def cam_sel_helper(self, index):
-        self.viewport_api.camera_path = self.camera_sel(self.prims)[index].GetPath()
+    def cam_sel_helper(self, c):
+        self.viewport_api.camera_path = c.GetPath()
 
+    def focus_prim(self):
+        try:
+            import omni.kit.viewport_legacy
+            viewport = omni.kit.viewport_legacy.get_viewport_interface().get_instance_list()
+            if viewport:
+                viewport.get_viewport_window().focus_on_selected()
+        except:
+            pass
+    
     def add_target_helper(self):
-        self._window2 = ui.Window("Add Targets", width = 400, height = 300)
-        with self._window2.frame:
-            with ui.VStack():
-                with ui.HStack():
-                    ui.Label("hi", alignment = ui.Alignment.LEFT_TOP)
-                    ui.CheckBox()
-           
+        omni.kit.commands.execute('CreatePrimWithDefaultXform',
+            prim_type='Xform', prim_path = '/World/target' + str(self.target_count),
+            attributes={},
+            select_new_prim=True)
+        try:
+            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
+            print(camera_pos)
+        except:
+            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
+            print(camera_pos)
+
+        omni.kit.commands.execute('ChangeProperty',
+            prop_path='/World/target' + str(self.target_count)+'.xformOp:translate',
+            value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
+            prev=None)
+
+        self.current_target = omni.usd.get_prim_at_path(Sdf.Path('/World/target' + str(self.target_count)))
+        print(self.current_target)
+        
+        self.target_count += 1
+
+    def slider(self):
+        with ui.VStack(spacing=-780, name="this", style={"VStack::this": {"margin": 5, "margin_width": 550}}):
+            collection = ui.RadioCollection()
+            self.slider = ui.IntSlider(collection.model, min=0, max=2, style = {"font_size": 7})
+            self.prev_ind = self.slider.model.get_value_as_int()
+            self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
+            
+            with ui.HStack(spacing=300):
+                self.label0 = ui.Label("orth", alignment = ui.Alignment.CENTER_TOP, style = {"color":0xFF000000} )
+                self.label1 =ui.Label("persp", alignment = ui.Alignment.CENTER_TOP)
+                self.label2 =ui.Label("iso", alignment = ui.Alignment.CENTER_TOP)
+
+    def slider_helper(self, x, y, a, b):
+            widget=self.slider
+            self.index = widget.model.get_value_as_int()
+            print(self.index, "current")
+            # print(b, "b")
+            black=0xFFDDDDDD
+            white=0xFF000000
+        
+            if self.prev_ind == 0:
+                print(self.prev_ind, "0")
+                self.label0.set_style({"color":black})
+                if self.index == 0:
+                    self.label0.set_style({"color":white})
+                    self.prev_ind = 0
+                elif self.index == 1:
+                    self.label1.set_style({"color":white})
+                    self.prev_ind = 1
+                elif self.index == 2:
+                    self.label2.set_style({"color":white})
+                    self.prev_ind = 2
+    
+    
+            elif self.prev_ind == 1:
+                print(self.prev_ind,"1")
+                self.label1.set_style({"color":black})
+                if self.index == 0:
+                    self.label0.set_style({"color":white})
+                    self.prev_ind = 0
+                elif self.index == 1:
+                    self.label1.set_style({"color":white})
+                    self.prev_ind = 1
+                elif self.index == 2:
+                    self.label2.set_style({"color":white})
+                    self.prev_ind = 2
+    
+            elif self.prev_ind == 2:
+                print(self.prev_ind,"2")
+                self.label2.set_style({"color":black})
+                if self.index == 0:
+                    self.label0.set_style({"color":white})
+                    self.prev_ind = 0
+                elif self.index == 1:
+                    self.label1.set_style({"color":white})
+                    self.prev_ind = 1
+                elif self.index == 2:
+                    self.label2.set_style({"color":white})
+                    self.prev_ind = 2
