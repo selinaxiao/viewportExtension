@@ -185,20 +185,23 @@ class MyExtension(omni.ext.IExt):
                     #     self.__show_window(None, False)
                 self.__window = ViewportWindow(self.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(self.__set_menu)
+
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
-                    # self.slider()
-                    self.view_button = ui.Button("Projections", width = 0, height = 50)
-                    self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
-                    # ui.IntSlider(min=0, max=4, width = 500, x = 500, y = 500)
+                    with ui.HStack():
+                        self.view_button = ui.Button("Projections", width = 0, height = 50)
+                        self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
+                        self.slider()
+                   
+
 
 
                 self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api        
                 
                 # print(dir(self.__window.frame))
-                self.cam = []
-                self.stage = omni.usd.get_context().get_stage()
-                prims = self.stage.GetDefaultPrim().GetChildren()
-                print(type(prims[2].GetAttribute('size').Get()))
+                # self.cam = []
+                # self.stage = omni.usd.get_context().get_stage()
+                # prims = self.stage.GetDefaultPrim().GetChildren()
+                # print(type(prims[2].GetAttribute('size').Get()))
                 # print(dir(self.stage.GetDefaultPrim()))
                 # for p in prims:
                 #     if "Camera" in str(p.GetPath()):
@@ -337,22 +340,30 @@ class MyExtension(omni.ext.IExt):
             (int)(widget.screen_position_x), (int)(widget.screen_position_y + widget.computed_content_height)
         )
        
+    def ortho_window_helper(self):
+        self._ortho_window = ui.Window('Orthographic Selection', width=200, height=70)
+        with self._ortho_window.frame:
+            with ui.HStack():
+                ui.Button("Top", width = 30, height = 30, clicked_fn=lambda: self.ortho_helper('top'))
+                ui.Button("Front", width = 30, height = 30, clicked_fn=lambda: self.ortho_helper('front'))
+                ui.Button("Right", width = 30, height = 30, clicked_fn=lambda: self.ortho_helper('right'))
+
     def ortho_helper(self, option:str):
         camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
-        self.stage = omni.usd.get_context().get_stage()
-        self.prims = self.stage.GetDefaultPrim().GetChildren()
-        targets = camera.GetRelationship('proxyPrim').GetTargets()
+        # self.stage = omni.usd.get_context().get_stage()
+        # self.prims = self.stage.GetDefaultPrim().GetChildren()
+        # targets = camera.GetRelationship('proxyPrim').GetTargets()
 
-        prims_to_remove = []
+        # prims_to_remove = []
 
-        for p in self.prims:
-            if p.IsA(UsdGeom.Camera):
-                prims_to_remove.append(p)
-            elif p.IsA(UsdLux.Light):
-                prims_to_remove.append(p)
+        # for p in self.prims:
+        #     if p.IsA(UsdGeom.Camera):
+        #         prims_to_remove.append(p)
+        #     elif p.IsA(UsdLux.Light):
+        #         prims_to_remove.append(p)
 
-        for p in prims_to_remove:
-            self.prims.remove(p)
+        # for p in prims_to_remove:
+        #     self.prims.remove(p)
 
         # print(self.prims, "final prims")
 
@@ -362,16 +373,28 @@ class MyExtension(omni.ext.IExt):
         z_pos = target_pos[2]
 
         if option == "top":
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets),y_pos/len(targets)+camera.GetAttribute('focusDistance').Get(),z_pos/len(targets)))
-            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(-90,0.0,0))
-        elif option == "front":
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets),y_pos/len(targets),z_pos/len(targets)+camera.GetAttribute('focusDistance').Get()))
+            print("ortho top")
+            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos,y_pos,z_pos+camera.GetAttribute('focusDistance').Get()))
             camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,0))
+        elif option == "front":
+            print("ortho front")
+            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+camera.GetAttribute('focusDistance').Get(),y_pos,z_pos))
+            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0.0,90))
         elif option == "right":
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos/len(targets)+camera.GetAttribute('focusDistance').Get(),y_pos/len(targets),z_pos/len(targets)))
-            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,90,0))
+            print("ortho right")
+            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos,y_pos+camera.GetAttribute('focusDistance').Get(),z_pos))
+            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,180))
 
         self.persp_to_orth()
+    
+    def iso_window_helper(self):
+        self._iso_window = ui.Window('Isometric Selection', width=200, height=70)
+        with self._iso_window.frame:
+            with ui.HStack():
+                ui.Button("NE", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("NE"))
+                ui.Button("NW", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("NW"))
+                ui.Button("SE", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("SE"))
+                ui.Button("SW", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("SW"))
 
     def iso_helper(self, angle:str):
         camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
@@ -551,13 +574,11 @@ class MyExtension(omni.ext.IExt):
         self.target_count += 1
 
     def slider(self):
-        with ui.VStack(spacing=-780, name="this", style={"VStack::this": {"margin": 5, "margin_width": 550}}):
-            collection = ui.RadioCollection()
-            self.slider = ui.IntSlider(collection.model, min=0, max=2, style = {"font_size": 7})
+        with ui.VStack(spacing = ui.Percent(-790)):
+            self.slider = ui.IntSlider(min=0, max=2,style = {"font_size": 7})
             self.prev_ind = self.slider.model.get_value_as_int()
             self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
-            
-            with ui.HStack(spacing=300):
+            with ui.HStack():
                 self.label0 = ui.Label("orth", alignment = ui.Alignment.CENTER_TOP, style = {"color":0xFF000000} )
                 self.label1 =ui.Label("persp", alignment = ui.Alignment.CENTER_TOP)
                 self.label2 =ui.Label("iso", alignment = ui.Alignment.CENTER_TOP)
@@ -565,47 +586,48 @@ class MyExtension(omni.ext.IExt):
     def slider_helper(self, x, y, a, b):
             widget=self.slider
             self.index = widget.model.get_value_as_int()
-            print(self.index, "current")
-            # print(b, "b")
             black=0xFFDDDDDD
             white=0xFF000000
-        
-            if self.prev_ind == 0:
-                print(self.prev_ind, "0")
-                self.label0.set_style({"color":black})
-                if self.index == 0:
-                    self.label0.set_style({"color":white})
-                    self.prev_ind = 0
-                elif self.index == 1:
-                    self.label1.set_style({"color":white})
-                    self.prev_ind = 1
-                elif self.index == 2:
-                    self.label2.set_style({"color":white})
-                    self.prev_ind = 2
-    
-    
-            elif self.prev_ind == 1:
-                print(self.prev_ind,"1")
-                self.label1.set_style({"color":black})
-                if self.index == 0:
-                    self.label0.set_style({"color":white})
-                    self.prev_ind = 0
-                elif self.index == 1:
-                    self.label1.set_style({"color":white})
-                    self.prev_ind = 1
-                elif self.index == 2:
-                    self.label2.set_style({"color":white})
-                    self.prev_ind = 2
-    
-            elif self.prev_ind == 2:
-                print(self.prev_ind,"2")
-                self.label2.set_style({"color":black})
-                if self.index == 0:
-                    self.label0.set_style({"color":white})
-                    self.prev_ind = 0
-                elif self.index == 1:
-                    self.label1.set_style({"color":white})
-                    self.prev_ind = 1
-                elif self.index == 2:
-                    self.label2.set_style({"color":white})
-                    self.prev_ind = 2
+
+            if self.index == 0:
+                if self.prev_ind == 0:
+                    self.label0.set_style({"color":black})
+                    self._ortho_window = None
+                elif self.prev_ind == 1:
+                    self.label1.set_style({"color":black})
+                elif self.prev_ind == 2:
+                    self.label2.set_style({"color":black})
+                    self._iso_window = None
+                
+                self.label0.set_style({"color":white})
+                self.prev_ind = 0
+                self.ortho_window_helper()
+            
+            if self.index == 1:
+                if self.prev_ind == 0:
+                    self.label0.set_style({"color":black})
+                    self._ortho_window = None
+                elif self.prev_ind == 1:
+                    self.label1.set_style({"color":black})
+                elif self.prev_ind == 2:
+                    self.label2.set_style({"color":black})
+                    self._iso_window = None
+                
+                self.label1.set_style({"color":white})
+                self.prev_ind = 1
+                self.orth_to_persp()
+            
+            if self.index == 2:
+                if self.prev_ind == 0:
+                    self.label0.set_style({"color":black})
+                    self._ortho_window = None
+                elif self.prev_ind == 1:
+                    self.label1.set_style({"color":black})
+                elif self.prev_ind == 2:
+                    self.label2.set_style({"color":black})
+                    self._iso_window = None
+                
+                self.label2.set_style({"color":white})
+                self.prev_ind = 2
+                self.iso_window_helper()
+
