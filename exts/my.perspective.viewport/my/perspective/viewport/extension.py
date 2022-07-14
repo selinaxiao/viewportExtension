@@ -62,53 +62,11 @@ class MyExtension(omni.ext.IExt):
 
         self._pushed_menu = ui.Menu("Pushed menu")
         self.target_count = 0
+        self.cam_count = 0
 
-        ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
-        icon_path = os.path.join(ext_path, "icons")
+        self.icon_helper(ext_id)
+        # self.initial_window()
 
-        self._toolbar = omni.kit.window.toolbar.get_instance()
-
-        self._zoning_envolope = SimpleToolButton(name="Zoning Envolope",
-            tooltip="Zoning Envolope",
-            icon_path=f"{icon_path}/envolope_icon.png",
-            icon_checked_path=f"{icon_path}/envolope_icon.png",
-            hotkey=Key.Z,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-
-        self._projection_icon = SimpleToolButton(name="Projection",
-            tooltip="Top/ Front/ Side/ Iso",
-            icon_path=f"{icon_path}/projection_icon.png",
-            icon_checked_path=f"{icon_path}/projection_icon.png",
-            hotkey=Key.P,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-
-        self._camera_icon = SimpleToolButton(name="Texture/ Strretview",
-            tooltip="Not Decided",
-            icon_path=f"{icon_path}/camera_icon.png",
-            icon_checked_path=f"{icon_path}/camera_icon.png",
-            hotkey=Key.T,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-        
-        self._sun_study = SimpleToolButton(name="Sun Study",
-            tooltip="Sun Study",
-            icon_path=f"{icon_path}/sun_icon.png",
-            icon_checked_path=f"{icon_path}/sun_icon.png",
-            hotkey=Key.S,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-        
-        self._wind_sim = SimpleToolButton(name="Wind Simulation",
-            tooltip="Wind Simulation",
-            icon_path=f"{icon_path}/wind_icon.png",
-            icon_checked_path=f"{icon_path}/wind_icon.png",
-            hotkey=Key.W,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-
-
-        self._toolbar.add_widget(self._zoning_envolope, 800)
-        self._toolbar.add_widget(self._projection_icon, 900)
-        self._toolbar.add_widget(self._camera_icon, 1000)
-        self._toolbar.add_widget(self._sun_study, 1100)
-        self._toolbar.add_widget(self._wind_sim, 1200)
       
     def on_shutdown(self):
         print("[my.perspective.viewport] MyExtension shutdown")
@@ -185,6 +143,8 @@ class MyExtension(omni.ext.IExt):
                     #     self.__show_window(None, False)
                 self.__window = ViewportWindow(self.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(self.__set_menu)
+                self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api
+                self.initial_window()
 
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
                     with ui.HStack():
@@ -192,23 +152,7 @@ class MyExtension(omni.ext.IExt):
                         self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
                         self.slider()
                    
-
-
-
-                self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api        
                 
-                # print(dir(self.__window.frame))
-                # self.cam = []
-                # self.stage = omni.usd.get_context().get_stage()
-                # prims = self.stage.GetDefaultPrim().GetChildren()
-                # print(type(prims[2].GetAttribute('size').Get()))
-                # print(dir(self.stage.GetDefaultPrim()))
-                # for p in prims:
-                #     if "Camera" in str(p.GetPath()):
-                #         self.cam.append(p)
-                # property = self.cam[0].GetProperty('xformOp:rotateYXZ')
-                # print(self.cam[0].GetAttribute('projection').Set("perspective"))
-
 
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
@@ -294,7 +238,53 @@ class MyExtension(omni.ext.IExt):
                 pass
     
 
+    def icon_helper(self, ext_id):
+        ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
+        icon_path = os.path.join(ext_path, "icons")
 
+        self._toolbar = omni.kit.window.toolbar.get_instance()
+
+        self._zoning_envolope = SimpleToolButton(name="Zoning Envolope",
+            tooltip="Zoning Envolope",
+            icon_path=f"{icon_path}/envolope_icon.png",
+            icon_checked_path=f"{icon_path}/envolope_icon.png",
+            hotkey=Key.Z,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+
+        self._projection_icon = SimpleToolButton(name="Projection",
+            tooltip="Top/ Front/ Side/ Iso",
+            icon_path=f"{icon_path}/projection_icon.png",
+            icon_checked_path=f"{icon_path}/projection_icon.png",
+            hotkey=Key.P,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+
+        self._camera_icon = SimpleToolButton(name="Texture/ Strretview",
+            tooltip="Not Decided",
+            icon_path=f"{icon_path}/camera_icon.png",
+            icon_checked_path=f"{icon_path}/camera_icon.png",
+            hotkey=Key.T,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+        
+        self._sun_study = SimpleToolButton(name="Sun Study",
+            tooltip="Sun Study",
+            icon_path=f"{icon_path}/sun_icon.png",
+            icon_checked_path=f"{icon_path}/sun_icon.png",
+            hotkey=Key.S,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+        
+        self._wind_sim = SimpleToolButton(name="Wind Simulation",
+            tooltip="Wind Simulation",
+            icon_path=f"{icon_path}/wind_icon.png",
+            icon_checked_path=f"{icon_path}/wind_icon.png",
+            hotkey=Key.W,
+            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
+
+
+        self._toolbar.add_widget(self._zoning_envolope, 800)
+        self._toolbar.add_widget(self._projection_icon, 900)
+        self._toolbar.add_widget(self._camera_icon, 1000)
+        self._toolbar.add_widget(self._sun_study, 1100)
+        self._toolbar.add_widget(self._wind_sim, 1200)
 
     def get_selected_prims(self):
         context = omni.usd.get_context()
@@ -574,7 +564,7 @@ class MyExtension(omni.ext.IExt):
         self.target_count += 1
 
     def slider(self):
-        with ui.VStack(spacing = ui.Percent(-790)):
+        with ui.ZStack():
             self.slider = ui.IntSlider(min=0, max=2,style = {"font_size": 7})
             self.prev_ind = self.slider.model.get_value_as_int()
             self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
@@ -630,4 +620,64 @@ class MyExtension(omni.ext.IExt):
                 self.label2.set_style({"color":white})
                 self.prev_ind = 2
                 self.iso_window_helper()
+
+    def create_cam_helper(self):
+        omni.kit.commands.execute('CreatePrim',
+            prim_path='/World/Camera' + str(self.cam_count),
+            prim_type='Camera')
+        try:
+            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
+            print(camera_pos)
+        except:
+            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
+            print(camera_pos)
+
+        omni.kit.commands.execute('ChangeProperty',
+            prop_path='/World/tCamera' + str(self.cam_count)+'.xformOp:translate',
+            value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
+            prev=None)
+
+        self.cam_count += 1
+        print(self.cam_count)
+
+    def initial_window(self):
+        # self.stage = omni.usd.get_context().get_stage()
+        # print(dir(self.stage.GetLayerStack()[1]))
+        # self.prims = self.stage.GetDefaultPrim().GetChildren()
+        # print(self.stage.__dir__())
+        self._init_window = ui.Window('Projection Views with Cameras', width=250, height=150)
+        with self._init_window.frame:
+            with ui.VStack():
+                with ui.HStack():
+                    ui.Label("Create Camera")
+                    ui.Button("Create",clicked_fn=self.create_cam_helper)
+
+                with ui.HStack():
+                    ui.Label("Load Camera")
+                    ui.Button("Load",clicked_fn=self.combobox_helper)
+                    
+                with ui.HStack():
+                    ui.Label("Select Camera")
+                    with ui.HStack():
+                        self.cam_combobox = ui.ComboBox(0, width =ui.Percent(50), height = ui.Percent(100))
+                        ui.Button("Select", width = ui.Percent(50), clicked_fn=self.combobox_selection_helper)
+                    
+
+                with ui.HStack():
+                    ui.Label("Set Target")
+                    ui.Button("Set",clicked_fn=self.add_target_helper)
+
+    def combobox_helper(self):
+        for option in self.cam_combobox.model.get_item_children():
+            self.cam_combobox.model.remove_item(option)
+        for c in self.camera_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren()):
+            self.cam_combobox.model.append_child_item(None, ui.SimpleStringModel(c.GetName()))
+
+    def combobox_selection_helper(self):
+        cameras = self.camera_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren())
+        cam_index = self.cam_combobox.model.get_item_value_model().get_value_as_int()
+        self.viewport_api.camera_path = str(cameras[cam_index].GetPath())
+        print(str(cameras[cam_index].GetPath()))
+
+
 
