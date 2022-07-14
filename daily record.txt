@@ -1,0 +1,24 @@
+7/13/2022
+solved slider problems today: 
+the viewort can change size with slider now
+the slider text color change is normal now
+Also, changed all the functions according to the slider currently
+
+remaining problems/other things to do:
+reorganizing codes
+
+slider still has problems:
+	1) the text cannot strickly follow the slider, need to find a place to put a update in the label position
+
+the gumball problem still unsolved, need to find a way to :
+	1) bring the texture from rhino to omniverse
+	2) import from rhino with correct orientation
+	3) find transformation matrix for the camera after the gimball is added and transforamtion on gimball is performed
+
+need to improve the viewport ui:
+	1) how to guide the user through all the procesdures? create camera-> select camera-> set target point -> do projections
+	2) need to add orbital option for the camera
+
+solve camera recursion problems:
+	1) subscribe to change in prims
+	2) click load camera
