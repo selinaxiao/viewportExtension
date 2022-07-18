@@ -220,12 +220,8 @@ class CameraWrapper:
             prim_type='Camera', prim_path='/World/Camera' + str(self.cam_count),
             attributes={'focusDistance': 400, 'focalLength': 24},
             select_new_prim=True)
-        try:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
-            print(camera_pos)
-        except:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
-            print(camera_pos)
+        
+        camera_pos = self.cam_position()
 
         omni.kit.commands.execute('ChangeProperty',
             prop_path='/World/tCamera' + str(self.cam_count)+'.xformOp:translate',
@@ -233,8 +229,19 @@ class CameraWrapper:
             prev=None)
 
         self.cam_count += 1
-        print(self.cam_count)
     
     def cam_sel_helper(self, c):
         self.viewport_api.camera_path = str(c.GetPath())
         
+    def forward_vec(self):
+        camera = UsdGeom.Camera(omni.usd.get_prim_at_path(self.viewport_api.camera_path)) 
+        print(camera.GetCamera().frustum.ComputeViewDirection()) 
+        return camera.GetCamera().frustum.ComputeViewDirection()
+    def cam_position(self):
+        try:
+            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
+            print(camera_pos)
+        except:
+            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
+            print(camera_pos)
+        return camera_pos

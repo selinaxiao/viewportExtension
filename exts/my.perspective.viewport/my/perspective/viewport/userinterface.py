@@ -1,7 +1,8 @@
+from carb import dictionary
 import omni.ui as ui
 
 class ButtonSelectionWindow:
-    def __init__(self,window_name,buttons,width=200, height=70,button_width=30,button_height=30):
+    def __init__(self,window_name,buttons,width=200, height=100,button_width=30,button_height=30):
         self.buttons = buttons
         self.window_name= window_name
         self.width=width
@@ -11,20 +12,24 @@ class ButtonSelectionWindow:
         self.window_object = None
     
     def set_up_window(self):
-
         self.window_object = ui.Window(self.window_name, width=self.width, height=self.height)
         with self.window_object.frame:
-            with ui.HStack():
-
-                for k,v in self.buttons.items():
-                    ui.Button(k, width=self.button_width, height=self.button_height, clicked_fn= v)
+            with ui.VStack():
+                with ui.HStack():
+                    for k,v in self.buttons[0].items():
+                        ui.Button(k, width=self.button_width, height=self.button_height, clicked_fn= v)
+                for k,v in self.buttons[1].items():
+                    with ui.HStack():
+                        ui.Label(k)
+                        ui.FloatSlider(min = v[0], max = v[1])
     
+                
     def on_shutdown(self):
         self.window_object = None
         
                
 class InitialWindow:
-    def __init__(self, window_name, buttons,width=250, height=150):
+    def __init__(self, window_name, buttons,width=400, height=300):
         self.buttons = buttons
         self.window_name= window_name
         self.width=width
@@ -37,16 +42,24 @@ class InitialWindow:
         with self.window_object.frame:
             with ui.VStack():
                 for k, v in self.buttons.items():
-                    with ui.HStack():
-                        ui.Label(k)
-                        if v[0]:
-                            with ui.HStack():
-                                c = ui.ComboBox(0, width = ui.Percent(50))
-                                combobox.append(c)
-                                ui.Button(v[1], clicked_fn=v[2])
-                        else:
-                             ui.Button(v[1], clicked_fn=v[2])
+                    with ui.CollapsableFrame(k):
+                        with ui.VStack():
+                            for values in v:
+                                with ui.HStack():
+                                    ui.Label(values[0])
+                                    if values[1]:
+                                        with ui.HStack():
+                                            c = ui.ComboBox(0, width = ui.Percent(50))
+                                            combobox.append(c)
+                                            ui.Button(values[2], clicked_fn=values[3])
+                                    else:
+                                        ui.Button(values[2], clicked_fn=values[3])
+        # self.window_object.visible = False
         return combobox
+    
+    def show_window(self):
+        self.window_object.visible = True
+        
 
 class SliderWrapper:
     def __init__(self, labels, slider_min=0, slider_max=2,style = {"font_size": 7}, enabled = False):

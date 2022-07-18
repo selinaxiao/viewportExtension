@@ -67,7 +67,7 @@ class MyExtension(omni.ext.IExt):
         self._pushed_menu = ui.Menu("Pushed menu")
         self.target_count = 0
         self.cam_count = 0
-
+        self.plane_count = 0
         
 
         self.icon_start_helper(ext_id)
@@ -89,6 +89,7 @@ class MyExtension(omni.ext.IExt):
 
         self.icon_end_helper()
         self.target_count = 0
+        self.plane_count = 0
         self.cam_wrapper.on_shutdown()
 
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
@@ -301,23 +302,27 @@ class MyExtension(omni.ext.IExt):
         return prims
 
     def ortho_window_helper(self):
-        buttons = { 
+        buttons = ({ 
         "Top": lambda: self.cam_wrapper.ortho_helper('top', self.current_target),
         "Front":lambda: self.cam_wrapper.ortho_helper('front', self.current_target),
         "Right":lambda: self.cam_wrapper.ortho_helper('right', self.current_target)
-        }
+        },
+        {"Zoom in/out": (-10, 10)}
+        )
 
         self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
         self.ortho_window.set_up_window()
 
     def iso_window_helper(self):
 
-        buttons = {
+        buttons = ({
         "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_target),
         "NW":lambda:self.cam_wrapper.iso_helper("NW", self.current_target),
         "SE":lambda:self.cam_wrapper.iso_helper("SE", self.current_target),
         "SW":lambda:self.cam_wrapper.iso_helper("SW", self.current_target)
-        }
+        }, 
+        {"Zoom in/out": (-10, 10)}
+        )
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
         self.iso_window.set_up_window()
@@ -334,18 +339,13 @@ class MyExtension(omni.ext.IExt):
                 asset_path=f"{mesh_path}/gimble.usd",
                 instanceable=True)
 
-        try:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
-            print(camera_pos)
-        except:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
-            print(camera_pos)
+        camera_pos = self.cam_wrapper.cam_position()
+        plane_pos = omni.usd.get_prim_at_path(Sdf.Path('/World/Plane')).GetAttribute('xformOp:translate').Get()
 
         # omni.kit.commands.execute('ChangeProperty',
         #     prop_path='/World/target' + str(self.target_count)+'.xformOp:translate',
         #     value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
         #     prev=None)
-
 
         omni.kit.commands.execute('TransformPrimCommand',
             path='/World/target' + str(self.target_count),
@@ -356,16 +356,41 @@ class MyExtension(omni.ext.IExt):
             new_transform_matrix=Gf.Matrix4d(1.0, 0.0, 0.0, 0.0,
                     0.0, 1.0, 0.0, 0.0,
                     0.0, 0.0, 1.0, 0.0,
-                    camera_pos[0], camera_pos[1], camera_pos[2], 1.0),
+                    plane_pos[0], plane_pos[1], plane_pos[2], 1.0),
             time_code=Usd.TimeCode.Default(),
             had_transform_at_key=False)
 
+        omni.kit.commands.execute('ChangeProperty',
+            prop_path=Sdf.Path('/World/target' + str(self.target_count)+'.xformOp:scale'),
+            value=Gf.Vec3f(0.05, 0.05, 0.05),
+            prev=Gf.Vec3f(1.0, 1.0, 1.0))
 
-        self.current_target = omni.usd.get_prim_at_path(Sdf.Path('/World/target' + str(self.target_count)))
+        omni.kit.commands.execute('MovePrim',
+            path_from='/World/target' + str(self.target_count),
+            path_to='/World/Plane/target' + str(self.target_count))
+
+        self.current_target = omni.usd.get_prim_at_path(Sdf.Path('/World/Plane/target' + str(self.target_count)))
         print(self.current_target)
         
         self.target_count += 1
         self.proj_slider.enabled = True
+
+    def add_plane_helper(self):
+        forward_vec = self.cam_wrapper.forward_vec()
+        cam_position = self.cam_wrapper.cam_position()
+        dist = 200
+        try:
+            omni.usd.get_prim_at_path(Sdf.Path('/World/Plane')).IsDefined()
+        except:
+            omni.kit.commands.execute('CreateMeshPrimWithDefaultXform',
+                prim_type='Plane'
+                )
+        omni.kit.commands.execute('ChangeProperty',
+            prop_path='/World/Plane.xformOp:translate',
+            value=Gf.Vec3f(cam_position[0]+forward_vec[0]*dist, cam_position[1]+forward_vec[1]*dist, cam_position[2]+forward_vec[2]*dist),
+            prev=None)
+        
+        self.plane_count+=1
 
     def slider(self):
         with ui.ZStack():
@@ -427,10 +452,16 @@ class MyExtension(omni.ext.IExt):
 
     def initial_window(self):
         buttons = {
-            "Create Camera":(False, "Create", self.cam_wrapper.create_cam_helper), 
-            "Load Camera":(False, "Load",self.combobox_helper), 
-            "Select Camera":(True, "Select", self.combobox_selection_helper), 
-            "Set Target": (False, "Set",self.add_target_helper)
+            "Camera":[
+                ("Create Camera",False, "Create", self.cam_wrapper.create_cam_helper), 
+                ("Load Camera",False, "Load",self.combobox_helper), 
+                ("Select Camera",True, "Select", self.combobox_selection_helper)
+                ], 
+
+            "Plane":[
+                ("Set Plane",False, "Set",self.add_plane_helper),
+                ("Add Target", False, "Add", self.add_target_helper)
+                ]
         }
         self.init_window = InitialWindow('Projection Views with Cameras', buttons)
         self.combobox = self.init_window.set_up_window()[0]
@@ -448,5 +479,5 @@ class MyExtension(omni.ext.IExt):
         self.cam_wrapper.cam_sel_helper(self.cameras[cam_index])
         print(str(self.cameras[cam_index].GetPath()))
 
-
-
+    def show_window(self):
+        self.init_window.show_window()
