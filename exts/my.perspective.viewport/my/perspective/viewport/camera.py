@@ -54,8 +54,8 @@ class CameraWrapper:
     def persp_to_orth(self):
         camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
         camera.GetAttribute('projection').Set('orthographic')
-        camera.GetAttribute('horizontalAperture').Set(5000)
-        camera.GetAttribute('verticalAperture').Set(5000)
+        camera.GetAttribute('horizontalAperture').Set(25000)
+        camera.GetAttribute('verticalAperture').Set(25000)
 
     def orth_to_persp(self):
         camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
@@ -74,46 +74,48 @@ class CameraWrapper:
         x_pos = target_pos[0]
         y_pos = target_pos[1]
         z_pos = target_pos[2]
+        target_rot = current_target.GetAttribute(UsdGeom.Xformable(current_target).GetOrderedXformOps()[1].GetOpName()).Get()[2]
 
         order = UsdGeom.Xformable(camera).GetOrderedXformOps()
         order_list = []
         for a in order:
             order_list.append(a.GetOpName())
 
-        focusdistance = self.get_selected_cam_attribute('focusDistance')
+        focusdistance = max(400, self.get_selected_cam_attribute('focusDistance'))
+
         if 'xformOp:transform' not in order_list:
             if option == "top":
                 print("ortho top")
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos,y_pos,z_pos+focusdistance))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,0))
+                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,target_rot))
             elif option == "front":
                 print("ortho front")
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+focusdistance,y_pos,z_pos))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0.0,90))
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+focusdistance*math.cos(target_rot*math.pi/180),y_pos+focusdistance*math.sin(target_rot*math.pi/180),z_pos))
+                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0.0,90+target_rot))
             elif option == "right":
                 print("ortho right")
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos,y_pos+focusdistance,z_pos))
-                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,180))
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-focusdistance*math.sin(target_rot*math.pi/180),y_pos+focusdistance*math.cos(target_rot*math.pi/180),z_pos))
+                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,180+target_rot))
 
         else:
             print("pass in transform matrix")
             print("prev transform matrix", self.get_selected_cam_attribute('xformOp:transform'))
 
-           
             if option == "top":
+                x_rot = x_rotation(0)
+                z_rot = z_rotation(target_rot*math.pi/180)
                 translate_matrix = translate(x_pos,y_pos,z_pos+focusdistance)
-                
 
-                camera.GetAttribute('xformOp:transform').Set(translate_matrix)
+                pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
+
                 print('after top transform matrix', camera.GetAttribute('xformOp:transform').Get())
 
             elif option == "front":
                 x_rot = x_rotation(math.pi/2)
 
-                z_rot = z_rotation(math.pi/2)
+                z_rot = z_rotation((90+target_rot)*math.pi/180)
 
-                translate_matrix =  translate(x_pos+focusdistance,y_pos,z_pos)
-                
+                translate_matrix =  translate(x_pos+focusdistance*math.cos(target_rot*math.pi/180),y_pos+focusdistance*math.sin(target_rot*math.pi/180),z_pos)
 
                 pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
 
@@ -122,9 +124,9 @@ class CameraWrapper:
             elif option == "right":
                 x_rot = x_rotation(math.pi/2)
 
-                z_rot = z_rotation(math.pi)
+                z_rot = z_rotation((180+target_rot)*math.pi/180)
 
-                translate_matrix = translate(x_pos,y_pos+focusdistance,z_pos)
+                translate_matrix = translate(x_pos-focusdistance*math.sin(target_rot*math.pi/180),y_pos+focusdistance*math.cos(target_rot*math.pi/180),z_pos)
 
                 pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
                 
@@ -143,6 +145,7 @@ class CameraWrapper:
         x_pos = target_pos[0]
         y_pos = target_pos[1]
         z_pos = target_pos[2]
+        target_rot = current_target.GetAttribute(UsdGeom.Xformable(current_target).GetOrderedXformOps()[1].GetOpName()).Get()[2]
 
         order = UsdGeom.Xformable(camera).GetOrderedXformOps()
         order_list = []
@@ -158,19 +161,23 @@ class CameraWrapper:
             dst_op_attr_name='xformOp:rotateXYZ',
             is_inverse_op=False)
 
+        proj_dist = 200
+        x_trans = proj_dist*math.sqrt(2)*math.cos((45+target_rot)*math.pi/180)
+        y_trans = proj_dist*math.sqrt(2)*math.sin((45+target_rot)*math.pi/180)
+
         if 'xformOp:transform' not in order_list:
             if angle == "NW":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-1000, y_pos+1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,225))
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-y_trans, y_pos+x_trans, z_pos+proj_dist))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,225+target_rot))
             elif angle == "NE":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+1000, y_pos+1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,135))
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+x_trans, y_pos+y_trans, z_pos+proj_dist))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,135+target_rot))
             elif angle == "SE":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+1000, y_pos-1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,45))
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+y_trans, y_pos-x_trans, z_pos+proj_dist))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,45+target_rot))
             elif angle == "SW":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-1000, y_pos-1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,315))
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-x_trans, y_pos-y_trans, z_pos+proj_dist))
+                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,315+target_rot))
         
         else:
             print("pass in transform matrix")
@@ -178,29 +185,29 @@ class CameraWrapper:
             x_rot = x_rotation(math.pi/2-math.atan(1/math.sqrt(2)))
 
             if angle == "NW":
-                z_rot = z_rotation(225*math.pi/180)
-                translate_matrix = translate(x_pos-1000, y_pos+1000, z_pos+1000)
+                z_rot = z_rotation((225+target_rot)*math.pi/180)
+                translate_matrix = translate(x_pos-y_trans, y_pos+x_trans, z_pos+proj_dist)
 
                 pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
                 print('after NW transform matrix', camera.GetAttribute('xformOp:transform').Get())
 
             elif angle == "NE":
-                z_rot = z_rotation(135*math.pi/180)
-                translate_matrix = translate(x_pos+1000, y_pos+1000, z_pos+1000)
+                z_rot = z_rotation((135+target_rot)*math.pi/180)
+                translate_matrix = translate(x_pos+x_trans, y_pos+y_trans, z_pos+proj_dist)
 
                 pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
                 print('after NE transform matrix', camera.GetAttribute('xformOp:transform').Get())
 
             elif angle == "SE":
-                z_rot = z_rotation(45*math.pi/180)
-                translate_matrix = translate(x_pos+1000, y_pos-1000, z_pos+1000)
+                z_rot = z_rotation((45+target_rot)*math.pi/180)
+                translate_matrix = translate(x_pos+y_trans, y_pos-x_trans, z_pos+proj_dist)
 
                 pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
                 print('after SE transform matrix', camera.GetAttribute('xformOp:transform').Get())
 
             elif angle == "SW":
-                z_rot = z_rotation(315*math.pi/180)
-                translate_matrix = translate(x_pos-1000, y_pos-1000, z_pos+1000)
+                z_rot = z_rotation((315+target_rot)*math.pi/180)
+                translate_matrix = translate(x_pos-x_trans, y_pos-y_trans, z_pos+proj_dist)
                 
                 pass_transform_matrix(camera, x_rot, z_rot, translate_matrix)
                 print('after SW transform matrix', camera.GetAttribute('xformOp:transform').Get())

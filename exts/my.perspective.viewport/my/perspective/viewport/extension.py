@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import omni.ext
 import omni.ui as ui
 from pxr import Sdf, Gf, UsdGeom, Usd
@@ -321,26 +322,17 @@ class MyExtension(omni.ext.IExt):
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
         self.iso_window.set_up_window()
 
-    def focus_prim(self):
-        try:
-            import omni.kit.viewport_legacy
-            viewport = omni.kit.viewport_legacy.get_viewport_interface().get_instance_list()
-            if viewport:
-                viewport.get_viewport_window().focus_on_selected()
-        except:
-            pass
-    
     def add_target_helper(self):
-       
         mesh_path = os.path.join(self.ext_path, "mesh")
-
-        print(omni.kit.commands.execute('Group'))
-        omni.kit.commands.execute('CreateReferenceCommand',
-            usd_context=omni.usd.get_context(),
-            path_to='/World/target' + str(self.target_count),
-
-            asset_path=f"{mesh_path}/gimble.usd" ,
-            instanceable=True)
+        try:
+            omni.usd.get_prim_at_path(Sdf.Path('/World/target' + str(self.target_count))).IsDefined()
+            
+        except:
+            omni.kit.commands.execute('CreateReferenceCommand',
+                usd_context=omni.usd.get_context(),
+                path_to='/World/target' + str(self.target_count),
+                asset_path=f"{mesh_path}/gimble.usd",
+                instanceable=True)
 
         try:
             camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]

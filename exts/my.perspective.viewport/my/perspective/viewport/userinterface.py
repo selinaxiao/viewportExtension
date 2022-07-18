@@ -48,4 +48,30 @@ class InitialWindow:
                              ui.Button(v[1], clicked_fn=v[2])
         return combobox
 
+class SliderWrapper:
+    def __init__(self, labels, slider_min=0, slider_max=2,style = {"font_size": 7}, enabled = False):
+        self.labels = labels
+        self.slider_min = slider_min
+        self.slider_max = slider_max
+        self.style = style
+        self.enabled = enabled
+        self.ui_labels = []
+    
+    def set_up_slider(self):
+        self.slider = ui.IntSlider(min=self.slider_min, max=self.slider_max, style = self.style, enabled = self.enabled)
+        self.prev_ind = self.slider.model.get_value_as_int()
+        self.slider.set_mouse_released_fn(lambda x, y, a, b, : self.slider_helper(x, y, a, b))
+        with ui.HStack():
+            self.ui_labels.append(ui.Label(self.labels[0], alignment = ui.Alignment.CENTER_TOP, style = {"color":0xFF000000} ))
+            for a in range(1, len(self.labels)):
+                self.ui_labels.append(ui.Label(self.labels[a], alignment = ui.Alignment.CENTER_TOP))
+            
+    # def slider_helper(self, x, y, a, b):
+    #     index = self.slider.model.get_value_as_int()
+    #     black=0xFFDDDDDD
+    #     white=0xFF000000
+    #     for i in range(len(self.ui_labels)):
+    #         if index == i:
+
+
 
