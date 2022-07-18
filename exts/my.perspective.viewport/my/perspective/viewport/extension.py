@@ -1,6 +1,6 @@
 import omni.ext
 import omni.ui as ui
-from pxr import Sdf, Gf, UsdGeom, UsdLux
+from pxr import Sdf, Gf, UsdGeom, Usd
 from omni.ui import Workspace
 from  omni.kit.viewport.window.window import ViewportWindow
 from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
@@ -11,6 +11,8 @@ import math
 from omni.kit.window.toolbar import SimpleToolButton
 import os
 from carb.input import KeyboardInput as Key
+from .camera import CameraWrapper
+from .userinterface import ButtonSelectionWindow, InitialWindow
 
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
 DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
@@ -22,7 +24,6 @@ DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowO
 class MyExtension(omni.ext.IExt):
     # ext_id is current extension id. It can be used with extension manager to query additional information, like where
     # this extension is located on filesystem.
-    """"""
 
     __all__ = ['ViewportExtension']
 
@@ -31,7 +32,7 @@ class MyExtension(omni.ext.IExt):
 
     def on_startup(self, ext_id):
         print("[my.perspective.viewport] MyExtension startup")
-
+        self.cam_wrapper = CameraWrapper()
         settings = carb.settings.get_settings()
         default_name = settings.get(DEFAULT_VIEWPORT_NAME) or "Viewport Window"
         self.WINDOW_NAME = default_name
@@ -39,6 +40,8 @@ class MyExtension(omni.ext.IExt):
 
         self.__window = None
         self.__registered = None
+
+        self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
 
         open_window = not settings.get(DEFAULT_VIEWPORT_NO_OPEN)
         Workspace.set_show_window_fn(self.WINDOW_NAME, lambda b: self.__show_window(None, b))
@@ -64,7 +67,9 @@ class MyExtension(omni.ext.IExt):
         self.target_count = 0
         self.cam_count = 0
 
-        self.icon_helper(ext_id)
+        
+
+        self.icon_start_helper(ext_id)
         # self.initial_window()
 
       
@@ -81,26 +86,9 @@ class MyExtension(omni.ext.IExt):
         from omni.kit.viewport.window.events import set_ui_delegate
         set_ui_delegate(None)
 
-        self._toolbar.remove_widget(self._zoning_envolope)
-        self._toolbar.remove_widget(self._projection_icon)
-        self._toolbar.remove_widget(self._camera_icon)
-        self._toolbar.remove_widget(self._sun_study)
-        self._toolbar.remove_widget(self._wind_sim)
-        self._zoning_envolope.clean()
-        self._zoning_envolope = None
-        self._projection_icon.clean()
-        self._projection_icon = None
-        self._camera_icon.clean()
-        self._camera_icon = None
-        self._sun_study.clean()
-        self._sun_study = None
-        self._wind_sim.clean()
-        self._wind_sim = None
-        self._toolbar = None
-
+        self.icon_end_helper()
         self.target_count = 0
-
-
+        self.cam_wrapper.on_shutdown()
 
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
         async def wait_for_window():
@@ -139,17 +127,18 @@ class MyExtension(omni.ext.IExt):
             if not self.__window:
                 # def visiblity_changed(visible):
                 #     self.__set_menu(visible)
-                    # if not visible:
-                    #     self.__show_window(None, False)
+                #     if not visible:
+                #         self.__show_window(None, False)
                 self.__window = ViewportWindow(self.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(self.__set_menu)
                 self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api
                 self.initial_window()
+                self.cam_wrapper.viewport_api = self.viewport_api
 
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
                     with ui.HStack():
-                        self.view_button = ui.Button("Projections", width = 0, height = 50)
-                        self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
+                        # self.view_button = ui.Button("Projections", width = 0, height = 50)
+                        # self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
                         self.slider()
                    
                 
@@ -237,8 +226,8 @@ class MyExtension(omni.ext.IExt):
             except Exception:
                 pass
     
-
-    def icon_helper(self, ext_id):
+    
+    def icon_start_helper(self, ext_id):
         ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
         icon_path = os.path.join(ext_path, "icons")
 
@@ -286,251 +275,51 @@ class MyExtension(omni.ext.IExt):
         self._toolbar.add_widget(self._sun_study, 1100)
         self._toolbar.add_widget(self._wind_sim, 1200)
 
+    def icon_end_helper(self):
+        self._toolbar.remove_widget(self._zoning_envolope)
+        self._toolbar.remove_widget(self._projection_icon)
+        self._toolbar.remove_widget(self._camera_icon)
+        self._toolbar.remove_widget(self._sun_study)
+        self._toolbar.remove_widget(self._wind_sim)
+        self._zoning_envolope.clean()
+        self._zoning_envolope = None
+        self._projection_icon.clean()
+        self._projection_icon = None
+        self._camera_icon.clean()
+        self._camera_icon = None
+        self._sun_study.clean()
+        self._sun_study = None
+        self._wind_sim.clean()
+        self._wind_sim = None
+        self._toolbar = None
+
     def get_selected_prims(self):
         context = omni.usd.get_context()
         stage = context.get_stage()
         prims = [stage.GetPrimAtPath(m) for m in context.get_selection().get_selected_prim_paths()]
         return prims
 
-    def menu_helper(self, x, y, button, modifier, widget):
-        # print("what's up")
-        if button != 0:
-            return
-
-        self.stage = omni.usd.get_context().get_stage()
-        self.prims = self.stage.GetDefaultPrim().GetChildren()
-
-        # Reset the previous context popup
-        self._pushed_menu.clear()
-        with self._pushed_menu:
-            with ui.Menu("Camera Selection"):
-                for c in self.camera_sel(self.prims):
-                    ui.MenuItem(c.GetName(), tooltip=str(c.GetPath()), triggered_fn=lambda argum=c: self.cam_sel_helper(argum))
-                # tooltip not successful, need debugging
-                    
-            ui.MenuItem("Add targets",triggered_fn=lambda: self.add_target_helper())
-
-            ui.MenuItem("Perspective", height = 100,triggered_fn=lambda: self.orth_to_persp())
-
-            with ui.Menu("Orthographic"):
-                ui.MenuItem("Top",triggered_fn=lambda: self.ortho_helper('top'))
-                ui.MenuItem("Front",triggered_fn=lambda: self.ortho_helper('front'))
-                ui.MenuItem("Right",triggered_fn=lambda: self.ortho_helper('right'))
-
-            with ui.Menu("Isometric"):
-                ui.MenuItem("NE", triggered_fn=lambda: self.iso_helper("NE"))
-                ui.MenuItem("NW", triggered_fn=lambda: self.iso_helper("NW"))
-                ui.MenuItem("SE", triggered_fn=lambda: self.iso_helper("SE"))
-                ui.MenuItem("SW", triggered_fn=lambda: self.iso_helper("SW"))
-            
-            self.dim = ui.MenuItem("Dimetric")
-
-        # Show it
-        self._pushed_menu.show_at(
-            (int)(widget.screen_position_x), (int)(widget.screen_position_y + widget.computed_content_height)
-        )
-       
     def ortho_window_helper(self):
-        self._ortho_window = ui.Window('Orthographic Selection', width=200, height=70)
-        with self._ortho_window.frame:
-            with ui.HStack():
-                ui.Button("Top", width = 30, height = 30, clicked_fn=lambda: self.ortho_helper('top'))
-                ui.Button("Front", width = 30, height = 30, clicked_fn=lambda: self.ortho_helper('front'))
-                ui.Button("Right", width = 30, height = 30, clicked_fn=lambda: self.ortho_helper('right'))
+        buttons = { 
+        "Top": lambda: self.cam_wrapper.ortho_helper('top', self.current_target),
+        "Front":lambda: self.cam_wrapper.ortho_helper('front', self.current_target),
+        "Right":lambda: self.cam_wrapper.ortho_helper('right', self.current_target)
+        }
 
-    def ortho_helper(self, option:str):
-        camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
-        # self.stage = omni.usd.get_context().get_stage()
-        # self.prims = self.stage.GetDefaultPrim().GetChildren()
-        # targets = camera.GetRelationship('proxyPrim').GetTargets()
+        self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
+        self.ortho_window.set_up_window()
 
-        # prims_to_remove = []
-
-        # for p in self.prims:
-        #     if p.IsA(UsdGeom.Camera):
-        #         prims_to_remove.append(p)
-        #     elif p.IsA(UsdLux.Light):
-        #         prims_to_remove.append(p)
-
-        # for p in prims_to_remove:
-        #     self.prims.remove(p)
-
-        # print(self.prims, "final prims")
-
-        target_pos = self.current_target.GetAttribute('xformOp:translate').Get()
-        x_pos = target_pos[0]
-        y_pos = target_pos[1]
-        z_pos = target_pos[2]
-
-        if option == "top":
-            print("ortho top")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos,y_pos,z_pos+camera.GetAttribute('focusDistance').Get()))
-            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(0,0.0,0))
-        elif option == "front":
-            print("ortho front")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+camera.GetAttribute('focusDistance').Get(),y_pos,z_pos))
-            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0.0,90))
-        elif option == "right":
-            print("ortho right")
-            camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos,y_pos+camera.GetAttribute('focusDistance').Get(),z_pos))
-            camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,180))
-
-        self.persp_to_orth()
-    
     def iso_window_helper(self):
-        self._iso_window = ui.Window('Isometric Selection', width=200, height=70)
-        with self._iso_window.frame:
-            with ui.HStack():
-                ui.Button("NE", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("NE"))
-                ui.Button("NW", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("NW"))
-                ui.Button("SE", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("SE"))
-                ui.Button("SW", width = 30, height = 30, clicked_fn=lambda: self.iso_helper("SW"))
 
-    def iso_helper(self, angle:str):
-        camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
-        target_pos = self.current_target.GetAttribute('xformOp:translate').Get()
-        x_pos = target_pos[0]
-        y_pos = target_pos[1]
-        z_pos = target_pos[2]
+        buttons = {
+        "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_target),
+        "NW":lambda:self.cam_wrapper.iso_helper("NW", self.current_target),
+        "SE":lambda:self.cam_wrapper.iso_helper("SE", self.current_target),
+        "SW":lambda:self.cam_wrapper.iso_helper("SW", self.current_target)
+        }
 
-        order = UsdGeom.Xformable(camera).GetOrderedXformOps()
-        order_list = []
-        for a in order:
-            order_list.append(a.GetOpName())
-        
-        # print(order_list)
-        
-        if 'xformOp:rotateXYZ' not in order_list and 'xformOp:transform' not in order_list:
-            omni.kit.commands.execute('ChangeRotationOp',
-            src_op_attr_path=Sdf.Path(str(camera.GetPath())+"."+UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()),
-            op_name=UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName(),
-            dst_op_attr_name='xformOp:rotateXYZ',
-            is_inverse_op=False)
-
-        if 'xformOp:transform' not in order_list:
-
-            if angle == "NW":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-1000, y_pos+1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,225))
-            elif angle == "NE":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+1000, y_pos+1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,135))
-            elif angle == "SE":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+1000, y_pos-1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,45))
-            elif angle == "SW":
-                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-1000, y_pos-1000, z_pos+1000))
-                camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,315))
-        
-        else:
-            print("pass in transform matrix")
-            print("prev transform matrix", camera.GetAttribute('xformOp:transform').Get())
-            x_rot = Gf.Matrix4d(
-                (1, 0, 0, 0),
-                (0, math.cos(math.pi/2-math.atan(1/math.sqrt(2))), -math.sin(math.pi/2-math.atan(1/math.sqrt(2))), 0),
-                (0, math.sin(math.pi/2-math.atan(1/math.sqrt(2))), math.cos(math.pi/2-math.atan(1/math.sqrt(2))), 0), 
-                (0, 0, 0, 1)
-                )
-
-            if angle == "NW":
-                z_rot = Gf.Matrix4d(
-                (math.cos(225*math.pi/180), -math.sin(225*math.pi/180), 0, 0),
-                (math.sin(225*math.pi/180), math.cos(225*math.pi/180), 0, 0),
-                (0, 0, 1, 0),
-                (0, 0, 0, 1)
-                )
-
-                translate_matrix = Gf.Matrix4d(
-                (1, 0, 0, 0),
-                (0, 1, 0, 0),
-                (0, 0, 1, 0),
-                (x_pos-1000, y_pos+1000, z_pos+1000, 1)
-                )
-
-                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
-                print('after NW transform matrix', camera.GetAttribute('xformOp:transform').Get())
-
-            elif angle == "NE":
-                z_rot = Gf.Matrix4d(
-                (math.cos(135*math.pi/180), -math.sin(135*math.pi/180), 0, 0),
-                (math.sin(135*math.pi/180), math.cos(135*math.pi/180), 0, 0),
-                (0, 0, 1, 0),
-                (0, 0, 0, 1)
-                )
-
-                translate_matrix = Gf.Matrix4d(
-                (1, 0, 0, 0),
-                (0, 1, 0, 0),
-                (0, 0, 1, 0),
-                (x_pos+1000, y_pos+1000, z_pos+1000, 1)
-                )
-
-                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
-                print('after NE transform matrix', camera.GetAttribute('xformOp:transform').Get())
-
-            elif angle == "SE":
-                z_rot = Gf.Matrix4d(
-                (math.cos(45*math.pi/180), -math.sin(45*math.pi/180), 0, 0),
-                (math.sin(45*math.pi/180), math.cos(45*math.pi/180), 0, 0),
-                (0, 0, 1, 0),
-                (0, 0, 0, 1)
-                )
-
-                translate_matrix = Gf.Matrix4d(
-                (1, 0, 0, 0),
-                (0, 1, 0, 0),
-                (0, 0, 1, 0),
-                (x_pos+1000, y_pos-1000, z_pos+1000, 1)
-                )
-
-                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
-                print('after SE transform matrix', camera.GetAttribute('xformOp:transform').Get())
-
-            elif angle == "SW":
-                z_rot = Gf.Matrix4d(
-                (math.cos(315*math.pi/180), -math.sin(315*math.pi/180), 0, 0),
-                (math.cos(315*math.pi/180), math.sin(315*math.pi/180), 0, 0),
-                (0, 0, 1, 0),
-                (0, 0, 0, 1)
-                )
-
-                translate_matrix = Gf.Matrix4d(
-                (1, 0, 0, 0),
-                (0, 1, 0, 0),
-                (0, 0, 1, 0),
-                (x_pos-1000, y_pos-1000, z_pos+1000, 1)
-                )
-                
-                camera.GetAttribute('xformOp:transform').Set(x_rot.GetTranspose()*z_rot.GetTranspose()*translate_matrix)
-                print('after SW transform matrix', camera.GetAttribute('xformOp:transform').Get())
-
-
-        self.persp_to_orth()
-    
-    def persp_to_orth(self):
-        camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
-        camera.GetAttribute('projection').Set('orthographic')
-        camera.GetAttribute('horizontalAperture').Set(5000)
-        camera.GetAttribute('verticalAperture').Set(5000)
-
-    def orth_to_persp(self):
-        camera=omni.usd.get_prim_at_path(self.viewport_api.camera_path)
-        camera.GetAttribute('projection').Set('perspective')
-        camera.GetAttribute('horizontalAperture').Set(10)
-        camera.GetAttribute('verticalAperture').Set(10)
-
-    def camera_sel(self, list):
-        cameras = []
-        for p in list:
-            if p.IsA(UsdGeom.Camera):
-                cameras.append(p)
-            if p.GetChildren():
-                cameras.extend(self.camera_sel(p.GetChildren()))
-        
-        return cameras
-
-    def cam_sel_helper(self, c):
-        self.viewport_api.camera_path = c.GetPath()
+        self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
+        self.iso_window.set_up_window()
 
     def focus_prim(self):
         try:
@@ -542,10 +331,17 @@ class MyExtension(omni.ext.IExt):
             pass
     
     def add_target_helper(self):
-        omni.kit.commands.execute('CreatePrimWithDefaultXform',
-            prim_type='Xform', prim_path = '/World/target' + str(self.target_count),
-            attributes={},
-            select_new_prim=True)
+       
+        mesh_path = os.path.join(self.ext_path, "mesh")
+
+        print(omni.kit.commands.execute('Group'))
+        omni.kit.commands.execute('CreateReferenceCommand',
+            usd_context=omni.usd.get_context(),
+            path_to='/World/target' + str(self.target_count),
+
+            asset_path=f"{mesh_path}/gimble.usd" ,
+            instanceable=True)
+
         try:
             camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
             print(camera_pos)
@@ -553,28 +349,44 @@ class MyExtension(omni.ext.IExt):
             camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
             print(camera_pos)
 
-        omni.kit.commands.execute('ChangeProperty',
-            prop_path='/World/target' + str(self.target_count)+'.xformOp:translate',
-            value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
-            prev=None)
+        # omni.kit.commands.execute('ChangeProperty',
+        #     prop_path='/World/target' + str(self.target_count)+'.xformOp:translate',
+        #     value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
+        #     prev=None)
+
+
+        omni.kit.commands.execute('TransformPrimCommand',
+            path='/World/target' + str(self.target_count),
+            old_transform_matrix=Gf.Matrix4d(1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0),
+            new_transform_matrix=Gf.Matrix4d(1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    camera_pos[0], camera_pos[1], camera_pos[2], 1.0),
+            time_code=Usd.TimeCode.Default(),
+            had_transform_at_key=False)
+
 
         self.current_target = omni.usd.get_prim_at_path(Sdf.Path('/World/target' + str(self.target_count)))
         print(self.current_target)
         
         self.target_count += 1
+        self.proj_slider.enabled = True
 
     def slider(self):
         with ui.ZStack():
-            self.slider = ui.IntSlider(min=0, max=2,style = {"font_size": 7})
-            self.prev_ind = self.slider.model.get_value_as_int()
-            self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
+            self.proj_slider = ui.IntSlider(min=0, max=2, style = {"font_size": 7}, enabled = False)
+            self.prev_ind = self.proj_slider.model.get_value_as_int()
+            self.proj_slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
             with ui.HStack():
                 self.label0 = ui.Label("orth", alignment = ui.Alignment.CENTER_TOP, style = {"color":0xFF000000} )
                 self.label1 =ui.Label("persp", alignment = ui.Alignment.CENTER_TOP)
                 self.label2 =ui.Label("iso", alignment = ui.Alignment.CENTER_TOP)
 
     def slider_helper(self, x, y, a, b):
-            widget=self.slider
+            widget=self.proj_slider
             self.index = widget.model.get_value_as_int()
             black=0xFFDDDDDD
             white=0xFF000000
@@ -582,12 +394,12 @@ class MyExtension(omni.ext.IExt):
             if self.index == 0:
                 if self.prev_ind == 0:
                     self.label0.set_style({"color":black})
-                    self._ortho_window = None
+                    self.ortho_window = None
                 elif self.prev_ind == 1:
                     self.label1.set_style({"color":black})
                 elif self.prev_ind == 2:
                     self.label2.set_style({"color":black})
-                    self._iso_window = None
+                    self.iso_window = None
                 
                 self.label0.set_style({"color":white})
                 self.prev_ind = 0
@@ -596,88 +408,53 @@ class MyExtension(omni.ext.IExt):
             if self.index == 1:
                 if self.prev_ind == 0:
                     self.label0.set_style({"color":black})
-                    self._ortho_window = None
+                    self.ortho_window = None
                 elif self.prev_ind == 1:
                     self.label1.set_style({"color":black})
                 elif self.prev_ind == 2:
                     self.label2.set_style({"color":black})
-                    self._iso_window = None
+                    self.iso_window = None
                 
                 self.label1.set_style({"color":white})
                 self.prev_ind = 1
-                self.orth_to_persp()
+                self.cam_wrapper.orth_to_persp()
             
             if self.index == 2:
                 if self.prev_ind == 0:
                     self.label0.set_style({"color":black})
-                    self._ortho_window = None
+                    self.ortho_window = None
                 elif self.prev_ind == 1:
                     self.label1.set_style({"color":black})
                 elif self.prev_ind == 2:
                     self.label2.set_style({"color":black})
-                    self._iso_window = None
+                    self.iso_window = None
                 
                 self.label2.set_style({"color":white})
                 self.prev_ind = 2
                 self.iso_window_helper()
 
-    def create_cam_helper(self):
-        omni.kit.commands.execute('CreatePrim',
-            prim_path='/World/Camera' + str(self.cam_count),
-            prim_type='Camera')
-        try:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
-            print(camera_pos)
-        except:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
-            print(camera_pos)
-
-        omni.kit.commands.execute('ChangeProperty',
-            prop_path='/World/tCamera' + str(self.cam_count)+'.xformOp:translate',
-            value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
-            prev=None)
-
-        self.cam_count += 1
-        print(self.cam_count)
-
     def initial_window(self):
-        # self.stage = omni.usd.get_context().get_stage()
-        # print(dir(self.stage.GetLayerStack()[1]))
-        # self.prims = self.stage.GetDefaultPrim().GetChildren()
-        # print(self.stage.__dir__())
-        self._init_window = ui.Window('Projection Views with Cameras', width=250, height=150)
-        with self._init_window.frame:
-            with ui.VStack():
-                with ui.HStack():
-                    ui.Label("Create Camera")
-                    ui.Button("Create",clicked_fn=self.create_cam_helper)
-
-                with ui.HStack():
-                    ui.Label("Load Camera")
-                    ui.Button("Load",clicked_fn=self.combobox_helper)
-                    
-                with ui.HStack():
-                    ui.Label("Select Camera")
-                    with ui.HStack():
-                        self.cam_combobox = ui.ComboBox(0, width =ui.Percent(50), height = ui.Percent(100))
-                        ui.Button("Select", width = ui.Percent(50), clicked_fn=self.combobox_selection_helper)
-                    
-
-                with ui.HStack():
-                    ui.Label("Set Target")
-                    ui.Button("Set",clicked_fn=self.add_target_helper)
+        buttons = {
+            "Create Camera":(False, "Create", self.cam_wrapper.create_cam_helper), 
+            "Load Camera":(False, "Load",self.combobox_helper), 
+            "Select Camera":(True, "Select", self.combobox_selection_helper), 
+            "Set Target": (False, "Set",self.add_target_helper)
+        }
+        self.init_window = InitialWindow('Projection Views with Cameras', buttons)
+        self.combobox = self.init_window.set_up_window()[0]
 
     def combobox_helper(self):
-        for option in self.cam_combobox.model.get_item_children():
-            self.cam_combobox.model.remove_item(option)
-        for c in self.camera_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren()):
-            self.cam_combobox.model.append_child_item(None, ui.SimpleStringModel(c.GetName()))
+        self.cameras = self.cam_wrapper.camera_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren())
+        print(self.cameras)
+        for option in self.combobox.model.get_item_children():
+            self.combobox.model.remove_item(option)
+        for c in self.cameras:
+            self.combobox.model.append_child_item(None, ui.SimpleStringModel(str(c.GetPath())))
 
     def combobox_selection_helper(self):
-        cameras = self.camera_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren())
-        cam_index = self.cam_combobox.model.get_item_value_model().get_value_as_int()
-        self.viewport_api.camera_path = str(cameras[cam_index].GetPath())
-        print(str(cameras[cam_index].GetPath()))
+        cam_index = self.combobox.model.get_item_value_model().get_value_as_int()
+        self.cam_wrapper.cam_sel_helper(self.cameras[cam_index])
+        print(str(self.cameras[cam_index].GetPath()))
 
 
 
