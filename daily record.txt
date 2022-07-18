@@ -22,3 +22,18 @@ need to improve the viewport ui:
 solve camera recursion problems:
 	1) subscribe to change in prims
 	2) click load camera
+
+
+7/17/2022
+Stuff done today:
+added "add plane" method 
+adjusted "add target" method 
+fixed ortho and iso in z up system 
+
+other things to do:
+	find better nyc model
+	add trigger func to slider in ortho and iso
+	add paint func to the viewport
+	find a better way to position the plane
+	change the inital window to be triggered by toggling side icons
+	add specs to methods
