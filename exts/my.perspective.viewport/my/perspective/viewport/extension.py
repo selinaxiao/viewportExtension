@@ -40,6 +40,7 @@ class MyExtension(omni.ext.IExt):
 
         self.__window = None
         self.__registered = None
+        #change
 
         self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
 
