@@ -22,42 +22,14 @@ keywords = ["kit", "example"]
 # Use omni.ui to build simple UI
 [dependencies]
 "omni.kit.uiapp" = {}
-"omni.ui" = {}
+"omni.kit.viewport.window" = {}
 "omni.kit.widget.viewport" = {}
 "omni.timeline" = {}
 "omni.kit.viewport.registry" = {}
-# These are all -optional- but included to give the most functional Viewport from loading this single extension
-# "omni.kit.viewport.menubar.core" = {}
-# "omni.kit.viewport.menubar.settings" = {}
 "omni.kit.manipulator.camera" = {}
 "omni.kit.manipulator.prim" = {}
 "omni.kit.manipulator.selection" = {}
-# Very -optional- dependencies
-# Not available until 103.1
-"omni.hydra.engine.stats" = { optional = true }
-# Not available in all versions app will probably own loading
-"omni.kit.viewport.legacy_gizmos" = { optional = true }
-# Viewportwindow has external drag-drop support, but it's optional
-"omni.kit.window.drop_support" = { optional = true }
 
-[[test]]
-dependencies = [
-    "omni.kit.window.drop_support",
-    "omni.kit.renderer.capture",
-    "omni.kit.viewport.legacy_gizmos",
-    "omni.kit.viewport.menubar.core",
-    "omni.kit.viewport.menubar.settings",
-    "omni.kit.viewport.menubar.render",
-    "omni.kit.viewport.menubar.display",
-    "omni.kit.viewport.menubar.camera",
-]
-
-args = [
-    "--/app/window/dpiScaleOverride=1.0",
-    "--/app/window/scaleToMonitor=false",
-    "--/exts/omni.kit.viewport.window/startup/disableWindowOnLoad=true",
-    "--no-window"
-]
 
 # Main python module this extension provides, it will be publicly available as "import omni.hello.world".
 [[python.module]]
@@ -69,3 +41,4 @@ name = "my.perspective.viewport"
 exts."my.perspective.viewport".startup.windowName="Viewport Perspective"
 # Setting to disable opening a Window instance when loaded
 exts."my.perspective.viewport".startup.disableWindowOnLoad=false
+

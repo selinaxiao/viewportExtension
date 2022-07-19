@@ -10,8 +10,10 @@ class ButtonSelectionWindow:
         self.button_width= button_width
         self.button_height= button_height
         self.window_object = None
+        self.sliders = None
     
-    def set_up_window(self):
+    def set_up_window(self, plane):
+        sliders = []
         self.window_object = ui.Window(self.window_name, width=self.width, height=self.height)
         with self.window_object.frame:
             with ui.VStack():
@@ -21,8 +23,11 @@ class ButtonSelectionWindow:
                 for k,v in self.buttons[1].items():
                     with ui.HStack():
                         ui.Label(k)
-                        ui.FloatSlider(min = v[0], max = v[1])
-    
+                        sliders.append(ui.FloatSlider(min = v[0], max = v[1]))
+        if plane is None:
+            self.window_object.visible = False
+        return sliders
+
                 
     def on_shutdown(self):
         self.window_object = None
@@ -38,7 +43,7 @@ class InitialWindow:
     
     def set_up_window(self):
         combobox = []
-        self.window_object = ui.Window(self.window_name, width=self.width, height=self.height)
+        self.window_object = ui.Window(self.window_name, width=self.width, height=self.height, visible=False)
         with self.window_object.frame:
             with ui.VStack():
                 for k, v in self.buttons.items():
