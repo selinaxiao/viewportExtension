@@ -12,7 +12,7 @@ from omni.kit.window.toolbar import SimpleToolButton
 import os
 from carb.input import KeyboardInput as Key
 from .camera import CameraWrapper
-from .userinterface import ButtonSelectionWindow, InitialWindow
+from .userinterface import ButtonSelectionWindow, IconWindow, SideIconWrapper, SliderWrapper
 
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
 DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
@@ -32,7 +32,18 @@ class MyExtension(omni.ext.IExt):
 
     def on_startup(self, ext_id):
         print("[my.perspective.viewport] MyExtension startup")
+
+
         self.cam_wrapper = CameraWrapper()
+
+
+        labels_list = [
+            ["Ortho", self.ortho_window_helper, self.ortho_remover],
+            ["Persp", self.cam_wrapper.orth_to_persp, None],
+            ["Iso", self.iso_window_helper,  self.iso_remover]
+        ]
+        self.proj_slider_wrapper = SliderWrapper(labels_list)
+
         settings = carb.settings.get_settings()
         default_name = settings.get(DEFAULT_VIEWPORT_NAME) or "Viewport Window"
         self.WINDOW_NAME = default_name
@@ -40,7 +51,6 @@ class MyExtension(omni.ext.IExt):
 
         self.__window = None
         self.__registered = None
-        #change
 
         self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
 
@@ -69,9 +79,14 @@ class MyExtension(omni.ext.IExt):
         self.cam_count = 0
         self.plane_count = 0
         self.current_plane = None
-        self.current_target = None        
+        self.current_target = None   
+        self.ortho_window = None
+        self.iso_window = None
 
-        self.icon_start_helper(ext_id)
+        self.icon_wrapper = SideIconWrapper(self.ext_path)
+        self.icon_start_helper(self.ext_path)
+ 
+        # self.proj_slider_wrapper.set_up_slider()
 
     def on_shutdown(self):
         print("[my.perspective.viewport] MyExtension shutdown")
@@ -86,10 +101,11 @@ class MyExtension(omni.ext.IExt):
         from omni.kit.viewport.window.events import set_ui_delegate
         set_ui_delegate(None)
 
-        self.icon_end_helper()
+
         self.target_count = 0
         self.plane_count = 0
         self.cam_wrapper.on_shutdown()
+        self.icon_wrapper.shut_down_icons()
 
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
         async def wait_for_window():
@@ -133,22 +149,18 @@ class MyExtension(omni.ext.IExt):
                 self.__window = ViewportWindow(self.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(self.__set_menu)
                 self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api
-                self.proj_window()
+                self.proj_window_helper()
+                
                 self.cam_wrapper.viewport_api = self.viewport_api
 
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
-                    with ui.HStack():
-                        # self.view_button = ui.Button("Projections", width = 0, height = 50)
-                        # self.view_button.set_mouse_pressed_fn(lambda x, y, a, b, widget=self.view_button: self.menu_helper(x, y, a, b, widget))
-                        self.slider()
-                   
-                
+                    self.proj_slider_wrapper.set_up_slider()
 
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
             self.__window.destroy()
             self.__window = None
-
+        
     def __register_scenes(self):
         def _is_extension_loaded(extension_name: str) -> bool:
             import omni.kit
@@ -227,77 +239,27 @@ class MyExtension(omni.ext.IExt):
             except Exception:
                 pass
      
-    def icon_start_helper(self, ext_id):
+    def icon_start_helper(self, ext_path):
         """
         Add five icons on the side: Zoning envolope, Projection, Texture, Sunstudy, Wind Simulation
         """
-        ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
-        icon_path = os.path.join(ext_path, "icons")
+        icon_buttons = [
+            ("Zoning Envolope", "Zoning Envolope", "envolope_icon.png", "envolope_icon.png", Key.Z, lambda c: carb.log_warn(f"Example button toggled {c}")), 
+            ("Projection", "Top/ Front/ Side/ Iso", "projection_icon.png", "projection_icon.png", Key.P, lambda c: self.proj_icon_helper(c)), 
+            ("Texture/ Streetview", "Not Decided", "camera_icon.png", "camera_icon.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Sun Study", "Sun Study", "sun_icon.png", "sun_icon.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Wind Simulation", "Wind Simulation", "wind_icon.png", "wind_icon.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
 
-        self._toolbar = omni.kit.window.toolbar.get_instance()
+        ]
 
-        self._zoning_envolope = SimpleToolButton(name="Zoning Envolope",
-            tooltip="Zoning Envolope",
-            icon_path=f"{icon_path}/envolope_icon.png",
-            icon_checked_path=f"{icon_path}/envolope_icon.png",
-            hotkey=Key.Z,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-
-        self._projection_icon = SimpleToolButton(name="Projection",
-            tooltip="Top/ Front/ Side/ Iso",
-            icon_path=f"{icon_path}/projection_icon.png",
-            icon_checked_path=f"{icon_path}/projection_icon.png",
-            hotkey=Key.P,
-            toggled_fn=lambda c: self.proj_icon_helper(c))
-
-        self._camera_icon = SimpleToolButton(name="Texture/ Streetview",
-            tooltip="Not Decided",
-            icon_path=f"{icon_path}/camera_icon.png",
-            icon_checked_path=f"{icon_path}/camera_icon.png",
-            hotkey=Key.T,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-        
-        self._sun_study = SimpleToolButton(name="Sun Study",
-            tooltip="Sun Study",
-            icon_path=f"{icon_path}/sun_icon.png",
-            icon_checked_path=f"{icon_path}/sun_icon.png",
-            hotkey=Key.S,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-        
-        self._wind_sim = SimpleToolButton(name="Wind Simulation",
-            tooltip="Wind Simulation",
-            icon_path=f"{icon_path}/wind_icon.png",
-            icon_checked_path=f"{icon_path}/wind_icon.png",
-            hotkey=Key.W,
-            toggled_fn=lambda c: carb.log_warn(f"Example button toggled {c}"))
-
-
-        self._toolbar.add_widget(self._zoning_envolope, 800)
-        self._toolbar.add_widget(self._projection_icon, 900)
-        self._toolbar.add_widget(self._camera_icon, 1000)
-        self._toolbar.add_widget(self._sun_study, 1100)
-        self._toolbar.add_widget(self._wind_sim, 1200)
+        self.icon_wrapper = SideIconWrapper(ext_path, "icons", icon_buttons)
+        self.icon_wrapper.set_up_icons()
 
     def icon_end_helper(self):
         """"
         clear up five icons on the side
         """
-        self._toolbar.remove_widget(self._zoning_envolope)
-        self._toolbar.remove_widget(self._projection_icon)
-        self._toolbar.remove_widget(self._camera_icon)
-        self._toolbar.remove_widget(self._sun_study)
-        self._toolbar.remove_widget(self._wind_sim)
-        self._zoning_envolope.clean()
-        self._zoning_envolope = None
-        self._projection_icon.clean()
-        self._projection_icon = None
-        self._camera_icon.clean()
-        self._camera_icon = None
-        self._sun_study.clean()
-        self._sun_study = None
-        self._wind_sim.clean()
-        self._wind_sim = None
-        self._toolbar = None
+        self.icon_wrapper.shut_down_icons()
 
     def get_selected_prims(self):
         """
@@ -307,6 +269,12 @@ class MyExtension(omni.ext.IExt):
         stage = context.get_stage()
         prims = [stage.GetPrimAtPath(m) for m in context.get_selection().get_selected_prim_paths()]
         return prims
+
+    def ortho_remover(self):
+        self.ortho_window=None
+
+    def iso_remover(self):
+        self.iso_window=None
 
     def ortho_window_helper(self):
         """
@@ -322,7 +290,7 @@ class MyExtension(omni.ext.IExt):
         {"Zoom in/out": (-5, 5)}
         )
         self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
-        self.ortho_slider = self.ortho_window.set_up_window(self.current_plane)[0]
+        # self.ortho_slider = self.ortho_window.set_up_window(self.current_plane)[0]
         
     def iso_window_helper(self):
         """
@@ -340,12 +308,15 @@ class MyExtension(omni.ext.IExt):
         )
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
-        self.iso_slider = self.iso_window.set_up_window(self.current_plane)[0]
+        # self.iso_slider = self.iso_window.set_up_window(self.current_plane)[0]
 
     def add_target_helper(self):
         """
         Add a target at the center of the current plane in the world
         """
+        if self.current_plane is None:
+            return 
+
         mesh_path = os.path.join(self.ext_path, "mesh")
         try:
             omni.usd.get_prim_at_path(Sdf.Path('/World/target' + str(self.target_count))).IsDefined()
@@ -357,13 +328,7 @@ class MyExtension(omni.ext.IExt):
                 asset_path=f"{mesh_path}/gimble.usd",
                 instanceable=True)
 
-        camera_pos = self.cam_wrapper.cam_position()
         plane_pos = omni.usd.get_prim_at_path(Sdf.Path('/World/Plane')).GetAttribute('xformOp:translate').Get()
-
-        # omni.kit.commands.execute('ChangeProperty',
-        #     prop_path='/World/target' + str(self.target_count)+'.xformOp:translate',
-        #     value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
-        #     prev=None)
 
         omni.kit.commands.execute('TransformPrimCommand',
             path='/World/target' + str(self.target_count),
@@ -425,72 +390,7 @@ class MyExtension(omni.ext.IExt):
         self.current_plane = omni.usd.get_prim_at_path(Sdf.Path(f'/World/Plane{plane_count}'))
         self.proj_slider.enabled = True
 
-    def slider(self):
-        """
-        Create a intslider with labels on the corresponding options
-        """
-        with ui.ZStack():
-            self.proj_slider = ui.IntSlider(min=0, max=2, style = {"font_size": 7}, enabled = False, visible = False)
-            self.prev_ind = self.proj_slider.model.get_value_as_int()
-            self.proj_slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
-            with ui.HStack():
-                self.label0 = ui.Label("orth", alignment = ui.Alignment.CENTER_TOP, style = {"color":0xFF000000}, visible = False )
-                self.label1 =ui.Label("persp", alignment = ui.Alignment.CENTER_TOP, visible = False)
-                self.label2 =ui.Label("iso", alignment = ui.Alignment.CENTER_TOP, visible = False)
-
-    def slider_helper(self, x, y, a, b):
-        """
-        make the labels change with the change in options
-        call corresponding helper function for each option
-        """
-        widget=self.proj_slider
-        self.index = widget.model.get_value_as_int()
-        black=0xFFDDDDDD
-        white=0xFF000000
-
-        if self.index == 0:
-            if self.prev_ind == 0:
-                self.label0.set_style({"color":black})
-                self.ortho_window = None
-            elif self.prev_ind == 1:
-                self.label1.set_style({"color":black})
-            elif self.prev_ind == 2:
-                self.label2.set_style({"color":black})
-                self.iso_window = None
-            
-            self.label0.set_style({"color":white})
-            self.prev_ind = 0
-            self.ortho_window_helper()
-        
-        if self.index == 1:
-            if self.prev_ind == 0:
-                self.label0.set_style({"color":black})
-                self.ortho_window = None
-            elif self.prev_ind == 1:
-                self.label1.set_style({"color":black})
-            elif self.prev_ind == 2:
-                self.label2.set_style({"color":black})
-                self.iso_window = None
-            
-            self.label1.set_style({"color":white})
-            self.prev_ind = 1
-            self.cam_wrapper.orth_to_persp()
-        
-        if self.index == 2:
-            if self.prev_ind == 0:
-                self.label0.set_style({"color":black})
-                self.ortho_window = None
-            elif self.prev_ind == 1:
-                self.label1.set_style({"color":black})
-            elif self.prev_ind == 2:
-                self.label2.set_style({"color":black})
-                self.iso_window = None
-            
-            self.label2.set_style({"color":white})
-            self.prev_ind = 2
-            self.iso_window_helper()
-
-    def proj_window(self):
+    def proj_window_helper(self):
         """
         create a window for projection icon
         contains camera functions, plane functions, and target functions
@@ -503,11 +403,13 @@ class MyExtension(omni.ext.IExt):
                 ], 
 
             "Plane":[
-                ("Set Plane",False, "Set",self.add_plane_helper),
+                ("Set Plane",False, "Set",self.add_plane_helper)       
+                ], 
+            "Target":[
                 ("Add Target", False, "Add", self.add_target_helper)
-                ]
+            ]
         }
-        self.proj_window = InitialWindow('Projection Views with Cameras', buttons)
+        self.proj_window = IconWindow('Projection Views with Cameras', buttons)
         self.combobox = self.proj_window.set_up_window()[0]
 
     def cam_combobox_helper(self):
@@ -527,7 +429,6 @@ class MyExtension(omni.ext.IExt):
         """
         cam_index = self.combobox.model.get_item_value_model().get_value_as_int()
         self.cam_wrapper.cam_sel_helper(self.cameras[cam_index])
-        # print(str(self.cameras[cam_index].GetPath()))
     
     def proj_slider_helper(self, x, y, a, b, widget: ui.FloatSlider):
         """
@@ -547,9 +448,6 @@ class MyExtension(omni.ext.IExt):
         when the icon is toggled, set the projection window, slider, and labels for the slider visible. 
         """
         self.proj_window.window_object.visible = c
-        self.proj_slider.visible = c
-        self.label0.visible = c
-        self.label1.visible = c
-        self.label2.visible = c
+        self.proj_slider_wrapper.set_label_visibility(c)
 
 
