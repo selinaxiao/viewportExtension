@@ -14,6 +14,7 @@ from carb.input import KeyboardInput as Key
 from .camera import CameraWrapper
 from .userinterface import ButtonSelectionWindow, IconWindow, SideIconWrapper, SliderWrapper
 
+# from omni.paint.system.core import extension
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
 DEFAULT_VIEWPORT_NO_OPEN = '/exts/my.perspective.viewport/startup/disableWindowOnLoad'
 
@@ -27,7 +28,7 @@ class MyExtension(omni.ext.IExt):
 
     __all__ = ['ViewportExtension']
 
-    WINDOW_NAME = "Viewport Perspective"
+    WINDOW_NAME = "Sketch In Context"
     MENU_PATH = f"Window/{WINDOW_NAME}"
 
     def on_startup(self, ext_id):
@@ -85,6 +86,8 @@ class MyExtension(omni.ext.IExt):
 
         self.icon_wrapper = SideIconWrapper(self.ext_path)
         self.icon_start_helper(self.ext_path)
+
+        # extension.PaintCoreExtension.on_startup()
  
         # self.proj_slider_wrapper.set_up_slider()
 
@@ -106,6 +109,7 @@ class MyExtension(omni.ext.IExt):
         self.plane_count = 0
         self.cam_wrapper.on_shutdown()
         self.icon_wrapper.shut_down_icons()
+        # extension.PaintCoreExtension.on_shutdown()
 
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
         async def wait_for_window():
