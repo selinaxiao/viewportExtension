@@ -3,6 +3,7 @@ import omni.ui as ui
 import omni.ext
 import os
 from omni.kit.window.toolbar import SimpleToolButton
+import functools
 
 class ButtonSelectionWindow:
     def __init__(self,window_name,buttons,width=200, height=100,button_width=30,button_height=30):
@@ -81,7 +82,6 @@ class SliderWrapper:
     
     def set_up_slider(self):
         self.slider = ui.IntSlider(min=self.slider_min, max=self.slider_max, style = self.style, enabled = self.enabled, visible = self.visible)
-        print("SETUP")
         self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
 
         with ui.HStack():
@@ -91,7 +91,6 @@ class SliderWrapper:
             
     def slider_helper(self, x, y, a, b):
         index = self.slider.model.get_value_as_int()
-        
         for i in range(len(self.ui_labels)):
             if index == i:
                 self.ui_labels[i].set_style({'color': self.white})
@@ -106,9 +105,6 @@ class SliderWrapper:
             self.slider.visible = c
         for label in self.ui_labels:
             label.visible = c
-
-        
-
 
 
 class SideIconWrapper:

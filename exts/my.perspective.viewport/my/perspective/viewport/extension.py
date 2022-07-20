@@ -38,12 +38,12 @@ class MyExtension(omni.ext.IExt):
         self.cam_wrapper = CameraWrapper()
 
 
-        labels_list = [
-            ["Ortho", self.ortho_window_helper, self.ortho_remover],
-            ["Persp", self.cam_wrapper.orth_to_persp, None],
-            ["Iso", self.iso_window_helper,  self.iso_remover]
-        ]
-        self.proj_slider_wrapper = SliderWrapper(labels_list)
+        # labels_list = [
+        #     ["Ortho", self.ortho_window_helper(), self.ortho_remover()],
+        #     ["Persp", self.cam_wrapper.orth_to_persp(), None],
+        #     ["Iso", self.iso_window_helper(),  self.iso_remover()]
+        # ]
+        # self.proj_slider_wrapper = SliderWrapper(labels_list)
 
         settings = carb.settings.get_settings()
         default_name = settings.get(DEFAULT_VIEWPORT_NAME) or "Viewport Window"
@@ -156,6 +156,12 @@ class MyExtension(omni.ext.IExt):
                 self.proj_window_helper()
                 
                 self.cam_wrapper.viewport_api = self.viewport_api
+                labels_list = [
+                    ["Ortho", self.ortho_window_helper, self.ortho_remover],
+                    ["Persp", self.cam_wrapper.orth_to_persp, None],
+                    ["Iso", self.iso_window_helper, self.iso_remover]
+                ]
+                self.proj_slider_wrapper = SliderWrapper(labels_list)
 
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
                     self.proj_slider_wrapper.set_up_slider()
@@ -293,8 +299,9 @@ class MyExtension(omni.ext.IExt):
         },
         {"Zoom in/out": (-5, 5)}
         )
+
         self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
-        # self.ortho_slider = self.ortho_window.set_up_window(self.current_plane)[0]
+        self.ortho_slider = self.ortho_window.set_up_window(self.current_plane)[0]
         
     def iso_window_helper(self):
         """
@@ -312,7 +319,7 @@ class MyExtension(omni.ext.IExt):
         )
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
-        # self.iso_slider = self.iso_window.set_up_window(self.current_plane)[0]
+        self.iso_slider = self.iso_window.set_up_window(self.current_plane)[0]
 
     def add_target_helper(self):
         """
@@ -360,7 +367,7 @@ class MyExtension(omni.ext.IExt):
         print(self.current_target)
         
         self.target_count += 1
-        self.proj_slider.enabled = True
+        self.proj_slider_wrapper.slider.enabled = True
 
     def add_plane_helper(self):
         """
@@ -392,7 +399,7 @@ class MyExtension(omni.ext.IExt):
         self.plane_count+=1
         
         self.current_plane = omni.usd.get_prim_at_path(Sdf.Path(f'/World/Plane{plane_count}'))
-        self.proj_slider.enabled = True
+        self.proj_slider_wrapper.slider.enabled = True
 
     def proj_window_helper(self):
         """
