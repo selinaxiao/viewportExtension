@@ -89,7 +89,7 @@ class SliderWrapper:
             for a in range(1, len(self.labels_list)):
                 self.ui_labels.append(ui.Label(self.labels_list[a][0], alignment = ui.Alignment.CENTER_TOP, visible = self.visible))
             
-    def slider_helper(self, x, y, a, b, widget):
+    def slider_helper(self, x, y, a, b):
         index = self.slider.model.get_value_as_int()
         
         for i in range(len(self.ui_labels)):
