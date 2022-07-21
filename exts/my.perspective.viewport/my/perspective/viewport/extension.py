@@ -37,13 +37,6 @@ class MyExtension(omni.ext.IExt):
         self.cam_wrapper = CameraWrapper()
 
 
-        # labels_list = [
-        #     ["Ortho", self.ortho_window_helper(), self.ortho_remover()],
-        #     ["Persp", self.cam_wrapper.orth_to_persp(), None],
-        #     ["Iso", self.iso_window_helper(),  self.iso_remover()]
-        # ]
-        # self.proj_slider_wrapper = SliderWrapper(labels_list)
-
         settings = carb.settings.get_settings()
         default_name = settings.get(DEFAULT_VIEWPORT_NAME) or "Viewport Window"
         self.WINDOW_NAME = default_name
@@ -63,9 +56,9 @@ class MyExtension(omni.ext.IExt):
                 self.dock_with_window(self.WINDOW_NAME, 'Viewport', omni.ui.DockPosition.SAME)
         open_window = True if (open_window and self.__window) else False
 
-        editor_menu = omni.kit.ui.get_editor_menu()
-        if editor_menu:
-            self.__menu = editor_menu.add_item(self.MENU_PATH, self.__show_window, toggle=True, value=open_window)
+        # editor_menu = omni.kit.ui.get_editor_menu()
+        # if editor_menu:
+        #     self.__menu = editor_menu.add_item(self.MENU_PATH, self.__show_window, toggle=True, value=open_window)
         
         self.__registered = self.__register_scenes()
         self.__default_drag_handlers = (
