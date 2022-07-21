@@ -52,7 +52,7 @@ name = "my.perspective.viewport"
 [settings]
 # Default to "Viewport Next" in case legacy viewport is also loaded
 # clients should be able to override this when they know that its not.
-exts."my.perspective.viewport".startup.windowName="Viewport Perspective"
+exts."my.perspective.viewport".startup.windowName="Sketch In Context"
 # Setting to disable opening a Window instance when loaded
 exts."my.perspective.viewport".startup.disableWindowOnLoad=false
 
