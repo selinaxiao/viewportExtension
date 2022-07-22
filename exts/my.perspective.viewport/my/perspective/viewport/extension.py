@@ -36,38 +36,22 @@ class MyExtension(omni.ext.IExt):
 
     def on_startup(self, ext_id):
         print("[my.perspective.viewport] MyExtension startup")
-
-
         self.cam_wrapper = CameraWrapper()
-
-
-        # labels_list = [
-        #     ["Ortho", self.ortho_window_helper(), self.ortho_remover()],
-        #     ["Persp", self.cam_wrapper.orth_to_persp(), None],
-        #     ["Iso", self.iso_window_helper(),  self.iso_remover()]
-        # ]
-        # self.proj_slider_wrapper = SliderWrapper(labels_list)
-
-        settings = carb.settings.get_settings()
-        default_name = settings.get(DEFAULT_VIEWPORT_NAME) or "Viewport Window"
-        self.WINDOW_NAME = default_name
-        self.MENU_PATH = f'Window/{default_name}'
 
         self.__window = None
         self.__registered = None
 
-        self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
-
+        settings = carb.settings.get_settings()
         open_window = not settings.get(DEFAULT_VIEWPORT_NO_OPEN)
         Workspace.set_show_window_fn(self.WINDOW_NAME, lambda b: self.__show_window(None, b))
+        
         if open_window:
             Workspace.show_window(self.WINDOW_NAME)
             if self.__window:
-               
                 self.dock_with_window(self.WINDOW_NAME, 'Viewport', omni.ui.DockPosition.SAME)
         open_window = True if (open_window and self.__window) else False
-
         editor_menu = omni.kit.ui.get_editor_menu()
+
         if editor_menu:
             self.__menu = editor_menu.add_item(self.MENU_PATH, self.__show_window, toggle=True, value=open_window)
         
@@ -78,6 +62,7 @@ class MyExtension(omni.ext.IExt):
             MaterialFileDropDelegate()
         )
 
+        
         self._pushed_menu = ui.Menu("Pushed menu")
         self.target_count = 0
         self.cam_count = 0
@@ -86,7 +71,7 @@ class MyExtension(omni.ext.IExt):
         self.current_target = None   
         self.ortho_window = None
         self.iso_window = None
-
+        self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
         self.icon_wrapper = SideIconWrapper(self.ext_path)
         self.icon_start_helper(self.ext_path)
 
@@ -98,6 +83,12 @@ class MyExtension(omni.ext.IExt):
 
     def on_shutdown(self):
         print("[my.perspective.viewport] MyExtension shutdown")
+        self.target_count = 0
+        self.plane_count = 0
+        self.cam_wrapper.on_shutdown()
+        self.icon_wrapper.shut_down_icons()
+
+
         Workspace.set_show_window_fn(self.WINDOW_NAME, None)
         self.__show_window(None, False)
         self.__menu = None
@@ -106,20 +97,16 @@ class MyExtension(omni.ext.IExt):
             self.__unregister_scenes(self.__registered)
             self.__registered = None
 
-        from omni.kit.viewport.window.events import set_ui_delegate
-        set_ui_delegate(None)
+        # from omni.kit.viewport.window.events import set_ui_delegate
+        # set_ui_delegate(None)
 
 
-        self.target_count = 0
-        self.plane_count = 0
-        self.cam_wrapper.on_shutdown()
-        self.icon_wrapper.shut_down_icons()
+        
         # extension.PaintCoreExtension.on_shutdown()
-
+    
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
         async def wait_for_window():
             dockspace = Workspace.get_window(dock_name)
-            print(window_name)
             window = Workspace.get_window(window_name)
             if (window is None) or (dockspace is None):
                 frames = 3
@@ -139,6 +126,7 @@ class MyExtension(omni.ext.IExt):
 
         import asyncio
         asyncio.ensure_future(wait_for_window())
+        
 
     def __set_menu(self, value):
         """Set the menu to create this window on and off"""
@@ -151,12 +139,13 @@ class MyExtension(omni.ext.IExt):
 
         if visible:
             if not self.__window:
-                # def visiblity_changed(visible):
-                #     self.__set_menu(visible)
-                #     if not visible:
-                #         self.__show_window(None, False)
+                def visiblity_changed(visible):
+                    self.__set_menu(visible)
+                    if not visible:
+                        self.__show_window(None, False)
                 self.__window = ViewportWindow(self.WINDOW_NAME)
-                self.__window.set_visibility_changed_fn(self.__set_menu)
+                self.__window.set_visibility_changed_fn(visiblity_changed)
+                
                 self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api
                 self.proj_window_helper()
                 
@@ -258,17 +247,21 @@ class MyExtension(omni.ext.IExt):
                 item.destroy()
             except Exception:
                 pass
-     
+
+
+
+
+
     def icon_start_helper(self, ext_path):
         """
         Add five icons on the side: Zoning envolope, Projection, Texture, Sunstudy, Wind Simulation
         """
         icon_buttons = [
-            ("Zoning Envolope", "Zoning Envolope", "envolope_icon.png", "envolope_icon.png", Key.Z, lambda c: carb.log_warn(f"Example button toggled {c}")), 
-            ("Projection", "Top/ Front/ Side/ Iso", "projection_icon.png", "projection_icon.png", Key.P, lambda c: self.proj_icon_helper(c)), 
-            ("Texture/ Streetview", "Not Decided", "camera_icon.png", "camera_icon.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Sun Study", "Sun Study", "sun_icon.png", "sun_icon.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Wind Simulation", "Wind Simulation", "wind_icon.png", "wind_icon.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
+            ("Zoning Envolope", "Zoning Envolope", "envelope.png", "envelope.png", Key.Z, lambda c: carb.log_warn(f"Example button toggled {c}")), 
+            ("Projection", "Projection: Ortho/ Persp/ Iso", "Camera.png", "Camera.png", Key.P, lambda c: self.proj_icon_helper(c)), 
+            ("Streetview", "Streetview", "VR.png", "VR.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Sun Study", "Sun Study", "sun.png", "sun.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Acoustic Analysis", "Acoustic Analysis", "Acoustic.png", "Acoustic.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
 
         ]
 

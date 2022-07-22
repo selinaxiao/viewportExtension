@@ -3,7 +3,7 @@
 version = "1.0.0"
 
 # The title and description fields are primarily for displaying extension info in UI
-title = "Perspective Viewport"
+title = "Sketch in Context"
 description="The simplest python extension example. Use it as a starting point for your extensions."
 
 # Path (relative to the root) or content of readme markdown file for UI.
@@ -21,25 +21,69 @@ keywords = ["kit", "example"]
 
 # Use omni.ui to build simple UI
 [dependencies]
-"omni.kit.uiapp" = {}
-"omni.kit.viewport.window" = {}
-"omni.kit.widget.viewport" = {}
-"omni.timeline" = {}
-"omni.kit.viewport.registry" = {}
-"omni.kit.manipulator.camera" = {}
-"omni.kit.manipulator.prim" = {}
-"omni.kit.manipulator.selection" = {}
-# "omni.kit.viewport.window.dragdrop" = {}
+"omni.ui" = {}
+"omni.kit.uiapp"= {}
+# "omni.kit.widget.viewport" = {}
+# "omni.timeline" = {}
+# "omni.kit.viewport.registry" = {}
+
+# "omni.kit.manipulator.camera" = {}
+# "omni.kit.manipulator.prim" = {}
+# "omni.kit.manipulator.selection" = {}
+
+# "omni.kit.uiapp" = {}
+
+"omni.kit.viewport.window"={}
+
+# # Not available until 103.1
+# "omni.hydra.engine.stats" = {}
+# # Not available in all versions app will probably own loading
+# "omni.kit.viewport.legacy_gizmos" = {}
+# # Viewportwindow has external drag-drop support, but it's optional
+# "omni.kit.window.drop_support" = { optional=true}
+
+
+
+
+
 
 
 # Main python module this extension provides, it will be publicly available as "import omni.hello.world".
 [[python.module]]
 name = "my.perspective.viewport"
 
-[settings]
-# Default to "Viewport Next" in case legacy viewport is also loaded
-# clients should be able to override this when they know that its not.
-exts."my.perspective.viewport".startup.windowName="Sketch In Context"
-# Setting to disable opening a Window instance when loaded
-exts."my.perspective.viewport".startup.disableWindowOnLoad=false
+# [settings]
+# # Default to "Viewport Next" in case legacy viewport is also loaded
+# # clients should be able to override this when they know that its not.
+# exts."my.perspective.viewport".startup.windowName="Sketch In Context"
+# # Setting to disable opening a Window instance when loaded
+# # exts."kit.viewport.window".startup.disableWindowOnLoad=false
 
+# exts."my.perspective.viewport".startup.disableWindowOnLoad=false
+
+
+
+
+
+# [[test]]
+# dependencies = [
+#     "omni.kit.window.drop_support",
+#     "omni.kit.renderer.capture",
+#     "omni.kit.viewport.legacy_gizmos",
+#     "omni.kit.viewport.menubar.core",
+#     "omni.kit.viewport.menubar.settings",
+#     "omni.kit.viewport.menubar.render",
+#     "omni.kit.viewport.menubar.display",
+#     "omni.kit.viewport.menubar.camera",
+# ]
+
+# args = [
+#     "--/app/window/dpiScaleOverride=1.0",
+#     "--/app/window/scaleToMonitor=false",
+#     "--/exts/omni.kit.viewport.window/startup/disableWindowOnLoad=true",
+#     "--no-window"
+# ]
+
+# stdoutFailPatterns.exclude = [
+#     "*TypeError: unsupported operand type(s)*", # Leak
+# ]
