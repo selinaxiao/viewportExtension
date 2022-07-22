@@ -247,11 +247,11 @@ class MyExtension(omni.ext.IExt):
         Add five icons on the side: Zoning envolope, Projection, Texture, Sunstudy, Wind Simulation
         """
         icon_buttons = [
-            ("Zoning Envolope", "Zoning Envolope", "envolope_icon.png", "envolope_icon.png", Key.Z, lambda c: carb.log_warn(f"Example button toggled {c}")), 
-            ("Projection", "Top/ Front/ Side/ Iso", "projection_icon.png", "projection_icon.png", Key.P, lambda c: self.proj_icon_helper(c)), 
-            ("Texture/ Streetview", "Not Decided", "camera_icon.png", "camera_icon.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Sun Study", "Sun Study", "sun_icon.png", "sun_icon.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Wind Simulation", "Wind Simulation", "wind_icon.png", "wind_icon.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
+            ("Zoning Envolope", "Zoning Envolope", "envelope.png", "envelope.png", Key.Z, lambda c: carb.log_warn(f"Example button toggled {c}")), 
+            ("Projection", "Projection: Ortho/ Persp/ Iso", "Camera.png", "Camera.png", Key.P, lambda c: self.proj_icon_helper(c)), 
+            ("Streetview", "Streetview", "VR.png", "VR.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Sun Study", "Sun Study", "sun.png", "sun.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Acoustic Analysis", "Acoustic Analysis", "Acoustic.png", "Acoustic.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
 
         ]
 
