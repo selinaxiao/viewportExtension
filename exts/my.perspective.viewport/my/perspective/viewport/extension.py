@@ -1,3 +1,4 @@
+from my.perspective.viewport.paint_tool import Paint_tool
 import omni.ext
 import omni.ui as ui
 from pxr import Sdf, Gf, UsdGeom, Usd
@@ -13,6 +14,8 @@ import os
 from carb.input import KeyboardInput as Key
 from .camera import CameraWrapper
 from .userinterface import ButtonSelectionWindow, IconWindow, SideIconWrapper, SliderWrapper
+
+# from omni.ui._ui import CanvasFrame
 
 # from omni.paint.system.core import extension
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
@@ -86,6 +89,8 @@ class MyExtension(omni.ext.IExt):
 
         self.icon_wrapper = SideIconWrapper(self.ext_path)
         self.icon_start_helper(self.ext_path)
+
+        # CanvasFrame()
 
         # extension.PaintCoreExtension.on_startup()
  
@@ -165,6 +170,11 @@ class MyExtension(omni.ext.IExt):
 
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
                     self.proj_slider_wrapper.set_up_slider()
+                    # omni.kit.commands.execute('CreateMeshPrimWithDefaultXform',
+                    #         prim_type='Plane')
+                    # painter=Paint_tool()
+                    # painter.add_layer_helper()
+
 
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
@@ -461,4 +471,5 @@ class MyExtension(omni.ext.IExt):
         self.proj_window.window_object.visible = c
         self.proj_slider_wrapper.set_label_visibility(c)
 
-
+    
+        

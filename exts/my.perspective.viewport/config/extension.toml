@@ -29,6 +29,7 @@ keywords = ["kit", "example"]
 "omni.kit.manipulator.camera" = {}
 "omni.kit.manipulator.prim" = {}
 "omni.kit.manipulator.selection" = {}
+# "omni.kit.viewport.window.dragdrop" = {}
 
 
 # Main python module this extension provides, it will be publicly available as "import omni.hello.world".

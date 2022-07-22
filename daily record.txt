@@ -37,3 +37,9 @@ other things to do:
 	find a better way to position the plane
 	change the inital window to be triggered by toggling side icons
 	add specs to methods
+
+7/21
+Conversation with Robert: incorporate in focal length and aperature (slider or string field and a set of common focal length)
+17mm 28mm 85mm 200mm
+This only applies for perspective
+
