@@ -38,7 +38,15 @@ other things to do:
 	change the inital window to be triggered by toggling side icons
 	add specs to methods
 
+<<<<<<< HEAD
+7/21
+Conversation with Robert: incorporate in focal length and aperature (slider or string field and a set of common focal length)
+17mm 28mm 85mm 200mm
+This only applies for perspective
+
+=======
 
 snap 
 record history
 add focus function 
+>>>>>>> 600abf3633a45bd3e91e261c97a4d9a8ce966eac
