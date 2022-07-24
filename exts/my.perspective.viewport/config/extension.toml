@@ -34,6 +34,7 @@ keywords = ["kit", "example"]
 # "omni.kit.uiapp" = {}
 
 "omni.kit.viewport.window"={}
+"omni.paint.system.ui" = {}
 
 # # Not available until 103.1
 # "omni.hydra.engine.stats" = {}
@@ -52,38 +53,3 @@ keywords = ["kit", "example"]
 [[python.module]]
 name = "my.perspective.viewport"
 
-# [settings]
-# # Default to "Viewport Next" in case legacy viewport is also loaded
-# # clients should be able to override this when they know that its not.
-# exts."my.perspective.viewport".startup.windowName="Sketch In Context"
-# # Setting to disable opening a Window instance when loaded
-# # exts."kit.viewport.window".startup.disableWindowOnLoad=false
-
-# exts."my.perspective.viewport".startup.disableWindowOnLoad=false
-
-
-
-
-
-# [[test]]
-# dependencies = [
-#     "omni.kit.window.drop_support",
-#     "omni.kit.renderer.capture",
-#     "omni.kit.viewport.legacy_gizmos",
-#     "omni.kit.viewport.menubar.core",
-#     "omni.kit.viewport.menubar.settings",
-#     "omni.kit.viewport.menubar.render",
-#     "omni.kit.viewport.menubar.display",
-#     "omni.kit.viewport.menubar.camera",
-# ]
-
-# args = [
-#     "--/app/window/dpiScaleOverride=1.0",
-#     "--/app/window/scaleToMonitor=false",
-#     "--/exts/omni.kit.viewport.window/startup/disableWindowOnLoad=true",
-#     "--no-window"
-# ]
-
-# stdoutFailPatterns.exclude = [
-#     "*TypeError: unsupported operand type(s)*", # Leak
-# ]

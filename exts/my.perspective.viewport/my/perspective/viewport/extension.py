@@ -13,6 +13,7 @@ import os
 from carb.input import KeyboardInput as Key
 from .camera import CameraWrapper
 from .userinterface import ButtonSelectionWindow, IconWindow, SideIconWrapper, SliderWrapper
+from .paint_tool import PaintToolInContext
 
 # from omni.paint.system.core import extension
 DEFAULT_VIEWPORT_NAME = '/exts/my.perspective.viewport/startup/windowName'
@@ -71,6 +72,7 @@ class MyExtension(omni.ext.IExt):
         self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
         self.icon_wrapper = SideIconWrapper(self.ext_path)
         self.icon_start_helper(self.ext_path)
+        self.paint_tool = PaintToolInContext(ext_id)
 
         # extension.PaintCoreExtension.on_startup()
  
@@ -95,6 +97,7 @@ class MyExtension(omni.ext.IExt):
         # from omni.kit.viewport.window.events import set_ui_delegate
         # set_ui_delegate(None)
 
+        self.paint_tool.paint_tool_shutdown()
 
         
         # extension.PaintCoreExtension.on_shutdown()
