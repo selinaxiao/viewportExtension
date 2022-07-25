@@ -34,7 +34,7 @@ keywords = ["kit", "example"]
 # "omni.kit.uiapp" = {}
 
 "omni.kit.viewport.window"={}
-"omni.paint.system.ui" = {}
+"omni.paint.system.bundle" = {}
 
 # # Not available until 103.1
 # "omni.hydra.engine.stats" = {}

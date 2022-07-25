@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from omni.kit.widgets.custom import WindowExtension
 from omni.paint.system.ui.paint_tool import PaintToolWindow
 import carb
@@ -33,7 +32,7 @@ class PaintToolInContext:
 
 def get_instance():
     return g_singleton
-=======
+    
 # from omni.paint.system.core import extension
 import omni.ui as ui
 import omni.kit.commands
@@ -103,4 +102,3 @@ class Paint_tool(omni.ext.IExt):
             stage = context.get_stage()
             prims = [stage.GetPrimAtPath(m) for m in context.get_selection().get_selected_prim_paths()]
             return prims
->>>>>>> 8bddc0a97cc5c4e1f3d26f3cda9f292e159c13c2

@@ -6,7 +6,7 @@ from omni.kit.window.toolbar import SimpleToolButton
 import functools
 
 class ButtonSelectionWindow:
-    def __init__(self,window_name,buttons,width=200, height=100,button_width=30,button_height=30):
+    def __init__(self,window_name,buttons,width=200, height=70,button_width=30,button_height=30):
         self.buttons = buttons
         self.window_name= window_name
         self.width=width
@@ -22,12 +22,8 @@ class ButtonSelectionWindow:
         with self.window_object.frame:
             with ui.VStack():
                 with ui.HStack():
-                    for k,v in self.buttons[0].items():
+                    for k,v in self.buttons.items():
                         ui.Button(k, width=self.button_width, height=self.button_height, clicked_fn= v)
-                for k,v in self.buttons[1].items():
-                    with ui.HStack():
-                        ui.Label(k)
-                        sliders.append(ui.FloatSlider(min = v[0], max = v[1]))
         if plane is None:
             self.window_object.visible = False
         return sliders
@@ -38,7 +34,14 @@ class ButtonSelectionWindow:
         
                
 class IconWindow:
-    def __init__(self, window_name, buttons,width=400, height=300):
+    def __init__(self, window_name, buttons,width=800, height=600):
+        """
+        buttons:
+        a dictionary of
+        key: name of collapsable frame
+        value: a list of tuples
+        where teh tuples contains (whether only label,name of label, whether there is a combobox, text on the button, callback fn of the button)
+        """
         self.buttons = buttons
         self.window_name= window_name
         self.width=width

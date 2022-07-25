@@ -75,7 +75,8 @@ class MyExtension(omni.ext.IExt):
         self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
         self.icon_wrapper = SideIconWrapper(self.ext_path)
         self.icon_start_helper(self.ext_path)
-        self.paint_tool = PaintToolInContext(ext_id)
+        # self.paint_tool = PaintToolInContext(ext_id)
+        # self.paint_tool._create_window()
 
         # CanvasFrame()
 
@@ -102,7 +103,7 @@ class MyExtension(omni.ext.IExt):
         # from omni.kit.viewport.window.events import set_ui_delegate
         # set_ui_delegate(None)
 
-        self.paint_tool.paint_tool_shutdown()
+        # self.paint_tool.paint_tool_shutdown()
 
         
         # extension.PaintCoreExtension.on_shutdown()
@@ -298,16 +299,16 @@ class MyExtension(omni.ext.IExt):
         Contains three options for orthographic projection: top, front, right
         Updating ortho window and ortho slider
         """
-        buttons = ({ 
+        buttons = { 
         "Top": lambda: self.cam_wrapper.ortho_helper('top', self.current_plane, self.current_target),
         "Front":lambda: self.cam_wrapper.ortho_helper('front', self.current_plane, self.current_target),
-        "Right":lambda: self.cam_wrapper.ortho_helper('right', self.current_plane, self.current_target)
-        },
-        {"Zoom in/out": (-5, 5)}
-        )
+        "Back" : lambda: self.cam_wrapper.ortho_helper('back', self.current_plane, self.current_target),
+        "Right":lambda: self.cam_wrapper.ortho_helper('right', self.current_plane, self.current_target),
+        "Left" : lambda: self.cam_wrapper.ortho_helper('left', self.current_plane, self.current_target)
+        }
 
         self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
-        self.ortho_slider = self.ortho_window.set_up_window(self.current_plane)[0]
+        self.ortho_window.set_up_window(self.current_plane)
         
     def iso_window_helper(self):
         """
@@ -315,17 +316,15 @@ class MyExtension(omni.ext.IExt):
         Contains three options for isometric projection: top, front, right
         Updating iso window and iso slider
         """
-        buttons = ({
+        buttons = {
         "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_plane, self.current_target),
         "NW":lambda:self.cam_wrapper.iso_helper("NW", self.current_plane, self.current_target),
         "SE":lambda:self.cam_wrapper.iso_helper("SE", self.current_plane, self.current_target),
         "SW":lambda:self.cam_wrapper.iso_helper("SW", self.current_plane, self.current_target)
-        }, 
-        {"Zoom in/out": (-5, 5)}
-        )
+        }
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
-        self.iso_slider = self.iso_window.set_up_window(self.current_plane)[0]
+        self.iso_window.set_up_window(self.current_plane)
 
     def add_target_helper(self):
         """
@@ -345,7 +344,9 @@ class MyExtension(omni.ext.IExt):
                 asset_path=f"{mesh_path}/gimble.usd",
                 instanceable=True)
 
-        plane_pos = omni.usd.get_prim_at_path(Sdf.Path('/World/Plane')).GetAttribute('xformOp:translate').Get()
+        plane_pos = self.current_plane.GetAttribute('xformOp:translate').Get()
+        print(plane_pos)
+        plane_path = self.current_plane.GetPath()
 
         omni.kit.commands.execute('TransformPrimCommand',
             path='/World/target' + str(self.target_count),
@@ -367,9 +368,10 @@ class MyExtension(omni.ext.IExt):
 
         omni.kit.commands.execute('MovePrim',
             path_from='/World/target' + str(self.target_count),
-            path_to='/World/Plane/target' + str(self.target_count))
+            path_to=f'{plane_path}/target' + str(self.target_count))
 
-        self.current_target = omni.usd.get_prim_at_path(Sdf.Path('/World/Plane/target' + str(self.target_count)))
+
+        self.current_target = omni.usd.get_prim_at_path(Sdf.Path(f'{plane_path}/target' + str(self.target_count)))
         print(self.current_target)
         
         self.target_count += 1
@@ -405,6 +407,9 @@ class MyExtension(omni.ext.IExt):
         self.plane_count+=1
         
         self.current_plane = omni.usd.get_prim_at_path(Sdf.Path(f'/World/Plane{plane_count}'))
+        for child in self.current_plane.GetChildren():
+            omni.kit.commands.execute('DeletePrims',
+	        paths=[child.GetPath()])
         self.proj_slider_wrapper.slider.enabled = True
 
     def proj_window_helper(self):
@@ -416,37 +421,90 @@ class MyExtension(omni.ext.IExt):
             "Camera":[
                 ("Create Camera",False, "Create", self.cam_wrapper.create_cam_helper), 
                 ("Load Camera",False, "Load",self.cam_combobox_helper), 
-                ("Select Camera",True, "Select", self.combobox_selection_helper)
+                ("Select Camera",True, "Select", self.cam_combobox_selection_helper)
                 ], 
 
             "Plane":[
-                ("Set Plane",False, "Set",self.add_plane_helper)       
+                ("Set GroundPlane",False, "Set",self.add_plane_helper), 
+                ("Load Ground Plane",False, "Load",self.plane_combobox_helper), 
+                ("Select Ground Plane",True, "Select", self.plane_combobox_selection_helper)       
                 ], 
             "Target":[
-                ("Add Target", False, "Add", self.add_target_helper)
+                ("Add Target", False, "Add", self.add_target_helper), 
+                ("Load Target",False, "Load",self.target_combobox_helper), 
+                ("Select Target",True, "Select", self.target_combobox_selection_helper)
             ]
         }
         self.proj_window = IconWindow('Projection Views with Cameras', buttons)
-        self.combobox = self.proj_window.set_up_window()[0]
+        comboboxes = self.proj_window.set_up_window()
+        self.cam_combobox = comboboxes[0]
+        self.plane_combobox = comboboxes[1]
+        self.target_combobox = comboboxes[2]
 
     def cam_combobox_helper(self):
         """
         Add all the cameras under stage as child items of the combobox
         """
         self.cameras = self.cam_wrapper.camera_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren())
-        # print(self.cameras)
-        for option in self.combobox.model.get_item_children():
-            self.combobox.model.remove_item(option)
+        print(self.cameras)
+        for option in self.cam_combobox.model.get_item_children():
+            self.cam_combobox.model.remove_item(option)
         for c in self.cameras:
-            self.combobox.model.append_child_item(None, ui.SimpleStringModel(str(c.GetPath())))
+            self.cam_combobox.model.append_child_item(None, ui.SimpleStringModel(str(c.GetPath())))
 
-    def combobox_selection_helper(self):
+    def plane_sel(self, list):
+        planes = []
+        for p in list:
+            index = str(p.GetPath()).rfind('/')
+            if "Plane" == str(p.GetPath())[index+1:index+6]:
+                planes.append(p)
+            if p.GetChildren():
+                planes.extend(self.plane_sel(p.GetChildren()))
+        return planes
+    
+    def plane_combobox_helper(self):
+        self.planes = self.plane_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren())
+        for option in self.plane_combobox.model.get_item_children():
+            self.plane_combobox.model.remove_item(option)
+        for p in self.planes:
+            self.plane_combobox.model.append_child_item(None, ui.SimpleStringModel(str(p.GetPath())))
+
+    def cam_combobox_selection_helper(self):
         """
         Feed in camera into the viewport api to give the viewport camera view
         """
-        cam_index = self.combobox.model.get_item_value_model().get_value_as_int()
+        cam_index = self.cam_combobox.model.get_item_value_model().get_value_as_int()
+        print(cam_index)
         self.cam_wrapper.cam_sel_helper(self.cameras[cam_index])
+
+    def target_sel(self, list):
+        targets = []
+        for t in list:
+            index = str(t.GetPath()).rfind('/')
+            if "target" == str(t.GetPath())[index+1:index+7]:
+                targets.append(t)
+            if t.GetChildren():
+                targets.extend(self.target_sel(t.GetChildren()))
+        return targets
+
+    def target_combobox_helper(self):
+        self.targets = self.target_sel(self.current_plane.GetChildren())
+        for option in self.target_combobox.model.get_item_children():
+            self.target_combobox.model.remove_item(option)
+        for t in self.targets:
+            self.target_combobox.model.append_child_item(None, ui.SimpleStringModel(str(t.GetPath())))
+
+    def plane_combobox_selection_helper(self):
+        plane_index = self.plane_combobox.model.get_item_value_model().get_value_as_int()
+        self.current_plane = self.planes[plane_index]
+        self.proj_slider_wrapper.slider.enabled = True
+        print(self.current_plane.GetAttribute('primvars:displayOpacity').Set(0.5))
     
+    def target_combobox_selection_helper(self):
+        target_index = self.target_combobox.model.get_item_value_model().get_value_as_int()
+        self.current_target = self.targets[target_index]
+        self.proj_slider_wrapper.slider.enabled = True
+
     def proj_slider_helper(self, x, y, a, b, widget: ui.FloatSlider):
         """
         For the FloatSlider passed in, take its value and adjust the projection aperture

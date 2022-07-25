@@ -70,24 +70,27 @@ class CameraWrapper:
         if current_plane is None:
             return 
         if current_target is None:
+            print("target is none")
             target_pos = (0, 0, 0)
             target_rot = 0
+            # target_scale = 1
         else:
+            print("atrget not none")
             target_pos = current_target.GetAttribute('xformOp:translate').Get()
             target_rot = current_target.GetAttribute(UsdGeom.Xformable(current_target).GetOrderedXformOps()[1].GetOpName()).Get()[2]
-
-        print(current_target)
-        print(current_plane)
+            # target_scale = current_target.GetAttribute('xformOp:scale').Get()
 
         camera = omni.usd.get_prim_at_path(self.viewport_api.camera_path)
         plane_pos = current_plane.GetAttribute('xformOp:translate').Get()
         plane_rot = current_plane.GetAttribute('xformOp:rotateXYZ').Get()[2]
+        plane_scale = current_plane.GetAttribute('xformOp:scale').Get()
 
-        x_pos = target_pos[0]+plane_pos[0]
-        y_pos = target_pos[1]+plane_pos[1]
-        z_pos = target_pos[2]+plane_pos[2]
+        x_pos = target_pos[0]*plane_scale[0]+plane_pos[0]
+        print(x_pos)
+        y_pos = target_pos[1]*plane_scale[1]+plane_pos[1]
+        print(y_pos)
+        z_pos = target_pos[2]*plane_scale[2]+plane_pos[2]
         rot = plane_rot+target_rot
-        
 
         order = UsdGeom.Xformable(camera).GetOrderedXformOps()
         order_list = []
@@ -109,6 +112,14 @@ class CameraWrapper:
                 print("ortho right")
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-focusdistance*math.sin(rot*math.pi/180),y_pos+focusdistance*math.cos(rot*math.pi/180),z_pos))
                 camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,180+rot))
+            elif option == "back":
+                print("ortho beck")
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-focusdistance*math.cos(rot*math.pi/180),y_pos-focusdistance*math.sin(rot*math.pi/180),z_pos))
+                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,270+rot))
+            elif option == "left":
+                print("ortho left")
+                camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+focusdistance*math.sin(rot*math.pi/180),y_pos-focusdistance*math.cos(rot*math.pi/180),z_pos))
+                camera.GetAttribute(UsdGeom.Xformable(camera).GetOrderedXformOps()[1].GetOpName()).Set(Gf.Vec3d(90,0,360+rot))
 
         else:
             print("pass in transform matrix")
@@ -169,10 +180,11 @@ class CameraWrapper:
         camera = omni.usd.get_prim_at_path(self.viewport_api.camera_path)
         plane_pos = current_plane.GetAttribute('xformOp:translate').Get()
         plane_rot = current_plane.GetAttribute('xformOp:rotateXYZ').Get()[2]
+        plane_scale = current_plane.GetAttribute('xformOp:scale').Get()
 
-        x_pos = target_pos[0]+plane_pos[0]
-        y_pos = target_pos[1]+plane_pos[1]
-        z_pos = target_pos[2]+plane_pos[2]
+        x_pos = target_pos[0]*plane_scale[0]+plane_pos[0]
+        y_pos = target_pos[1]*plane_scale[1]+plane_pos[1]
+        z_pos = target_pos[2]*plane_scale[2]+plane_pos[2]
         rot = plane_rot+target_rot
 
         order = UsdGeom.Xformable(camera).GetOrderedXformOps()
