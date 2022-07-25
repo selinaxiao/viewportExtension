@@ -31,8 +31,8 @@ def pass_transform_matrix(camera, x_rot, z_rot, translation):
 
 
 class CameraWrapper:
-    def __init__(self,viewport_api= None):
-        self.viewport_api= viewport_api
+    def __init__(self, viewport_api = None):
+        self.viewport_api = viewport_api
         self.cam_count = 0
         self.ortho_proj = False
         self.iso_proj = False
@@ -271,9 +271,10 @@ class CameraWrapper:
             select_new_prim=True)
         
         camera_pos = self.cam_position()
+        print("Create Helper Pos:",camera_pos)
 
         omni.kit.commands.execute('ChangeProperty',
-            prop_path='/World/tCamera' + str(self.cam_count)+'.xformOp:translate',
+            prop_path='/World/Camera' + str(self.cam_count)+'.xformOp:translate',
             value=Gf.Vec3f(camera_pos[0], camera_pos[1], camera_pos[2]),
             prev=None)
 
@@ -286,11 +287,15 @@ class CameraWrapper:
         camera = UsdGeom.Camera(omni.usd.get_prim_at_path(self.viewport_api.camera_path)) 
         print(camera.GetCamera().frustum.ComputeViewDirection()) 
         return camera.GetCamera().frustum.ComputeViewDirection()
+    
     def cam_position(self):
         try:
             camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:transform').Get()[3]
             print(camera_pos)
         except:
-            camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
+            if self.viewport_api.camera_path:
+                camera_pos = omni.usd.get_prim_at_path(self.viewport_api.camera_path).GetAttribute('xformOp:translate').Get()
+            else:
+                camera_pos = omni.usd.get_prim_at_path("/OmniverseKit_Persp").GetAttribute('xformOp:translate').Get()
             print(camera_pos)
         return camera_pos
