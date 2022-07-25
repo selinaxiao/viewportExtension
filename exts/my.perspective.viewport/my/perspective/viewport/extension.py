@@ -1,20 +1,22 @@
-from my.perspective.viewport.paint_tool import Paint_tool
+# from my.perspective.viewport.paint_tool import Paint_tool
 import omni.ext
 import omni.ui as ui
 from pxr import Sdf, Gf, UsdGeom, Usd
 from omni.ui import Workspace
-from  omni.kit.viewport.window.window import ViewportWindow
-from  omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
-from  omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDropDelegate
-from  omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
+from omni.kit.viewport.window.window import ViewportWindow
+from omni.kit.viewport.window.dragdrop.usd_file_drop_delegate import UsdFileDropDelegate
+from omni.kit.viewport.window.dragdrop.usd_prim_drop_delegate import UsdShadeDropDelegate
+from omni.kit.viewport.window.dragdrop.material_file_drop_delegate import MaterialFileDropDelegate
 import carb
-import math
-from omni.kit.window.toolbar import SimpleToolButton
 import os
 from carb.input import KeyboardInput as Key
 from .camera import CameraWrapper
 from .userinterface import ButtonSelectionWindow, IconWindow, SideIconWrapper, SliderWrapper
-from .paint_tool import PaintToolInContext
+# from .paint_tool import PaintToolInContext
+from .adobe import AdobeInterface
+
+
+
 
 # from omni.ui._ui import CanvasFrame
 
@@ -63,7 +65,6 @@ class MyExtension(omni.ext.IExt):
             MaterialFileDropDelegate()
         )
 
-        
         self._pushed_menu = ui.Menu("Pushed menu")
         self.target_count = 0
         self.cam_count = 0
@@ -75,6 +76,11 @@ class MyExtension(omni.ext.IExt):
         self.ext_path = omni.kit.app.get_app().get_extension_manager().get_extension_path(ext_id)
         self.icon_wrapper = SideIconWrapper(self.ext_path)
         self.icon_start_helper(self.ext_path)
+        self.ext_id = ext_id
+        self.screenshot_window = AdobeInterface()
+
+
+        # self.screenshot_window._window.visible = False
         # self.paint_tool = PaintToolInContext(ext_id)
         # self.paint_tool._create_window()
 
@@ -88,9 +94,10 @@ class MyExtension(omni.ext.IExt):
         print("[my.perspective.viewport] MyExtension shutdown")
         self.target_count = 0
         self.plane_count = 0
+        
         self.cam_wrapper.on_shutdown()
         self.icon_wrapper.shut_down_icons()
-
+        self.screenshot_window.change_window_visibility(False)
 
         Workspace.set_show_window_fn(self.WINDOW_NAME, None)
         self.__show_window(None, False)
@@ -287,12 +294,15 @@ class MyExtension(omni.ext.IExt):
 
     def ortho_remover(self):
         self.ortho_window=None
+        self.screenshot_window.change_window_visibility(False)
 
     def iso_remover(self):
         self.iso_window=None
+        self.screenshot_window.change_window_visibility(False)
 
     def persp_remover(self):
         self.persp_window = None
+        self.screenshot_window.change_window_visibility(False)
 
     def ortho_window_helper(self):
         """
@@ -309,8 +319,16 @@ class MyExtension(omni.ext.IExt):
         }
 
         self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
-        self.ortho_window.set_up_window(self.current_plane)
-        
+        paint_buttons = self.ortho_window.set_up_window(self.current_plane)
+        self.ortho_paint_expt = paint_buttons[0]
+        self.ortho_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
+        # self.ortho_opt = self.ortho_window.ortho_opt
+        # self.ortho_paint_end = paint_buttons[1]
+    
+    def screenshot_helper(self, x, y, a, b):
+        print("screenshot window visible")
+        print(self.screenshot_window.change_window_visibility(True))
+
     def iso_window_helper(self):
         """
         get window for isometric projection
@@ -325,7 +343,9 @@ class MyExtension(omni.ext.IExt):
         }
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
-        self.iso_window.set_up_window(self.current_plane)
+        paint_buttons = self.iso_window.set_up_window(self.current_plane)
+        self.iso_paint_expt = paint_buttons[0]
+        self.iso_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
 
     def persp_window_helper(self):
         buttons = {
@@ -333,8 +353,9 @@ class MyExtension(omni.ext.IExt):
             "Orth" : lambda:self.cam_wrapper.persp_to_orth()
         }
         self.persp_window = ButtonSelectionWindow("Perspective Selection",buttons)
-        self.persp_window.set_up_window(self.current_plane)
-
+        paint_buttons = self.persp_window.set_up_window(self.current_plane)
+        self.persp_paint_expt = paint_buttons[0]
+        self.persp_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
 
     def add_target_helper(self):
         """
@@ -536,5 +557,5 @@ class MyExtension(omni.ext.IExt):
         self.proj_window.window_object.visible = c
         self.proj_slider_wrapper.set_label_visibility(c)
 
-    
-        
+    # def ortho_paint_start_helper(self, option):
+    #     if option == "Top":

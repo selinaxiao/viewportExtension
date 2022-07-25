@@ -36,6 +36,8 @@ class CameraWrapper:
         self.cam_count = 0
         self.ortho_proj = False
         self.iso_proj = False
+        self.ortho_opt = None
+        self.iso_opt = None
         
 
     def on_shutdown(self):
@@ -162,6 +164,7 @@ class CameraWrapper:
         self.persp_to_orth()
         self.ortho_proj = True
         self.iso_proj = False
+        self.ortho_opt = option
 
     def change_aperture(self, aperture_ratio):
             camera = omni.usd.get_prim_at_path(self.viewport_api.camera_path)

@@ -35,6 +35,7 @@ keywords = ["kit", "example"]
 
 "omni.kit.viewport.window"={}
 "omni.paint.system.bundle" = {}
+# "omni.pcg.adobeinterface" = {}
 
 # # Not available until 103.1
 # "omni.hydra.engine.stats" = {}

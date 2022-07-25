@@ -1,9 +1,10 @@
 from carb import dictionary
+from omni.kit.viewport.window.manipulator.context_menu import ClickGesture
 import omni.ui as ui
 import omni.ext
 import os
 from omni.kit.window.toolbar import SimpleToolButton
-import functools
+from .adobe import AdobeInterface
 
 class ButtonSelectionWindow:
     def __init__(self,window_name,buttons,width=200, height=150,button_width=30,button_height=30):
@@ -17,6 +18,9 @@ class ButtonSelectionWindow:
         self.sliders = None
     
     def set_up_window(self, plane):
+        """
+        NEed to first choose a projection, then the paint button is enabled
+        """
         paint_buttons = []
         self.window_object = ui.Window(self.window_name, width=self.width, height=self.height)
         with self.window_object.frame:
@@ -25,8 +29,7 @@ class ButtonSelectionWindow:
                     for k,v in self.buttons.items():
                         ui.Button(k, width=self.button_width, height=self.button_height, clicked_fn= v)
                 with ui.HStack():
-                    paint_buttons.append(ui.Button("Start Painting"))
-                    paint_buttons.append(ui.Button("End Painting"))
+                    paint_buttons.append(ui.Button("Export Image"))
         if plane is None:
             self.window_object.visible = False
         return paint_buttons

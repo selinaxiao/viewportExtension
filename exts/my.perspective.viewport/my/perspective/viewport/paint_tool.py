@@ -32,7 +32,7 @@ class PaintToolInContext:
 
 def get_instance():
     return g_singleton
-    
+
 # from omni.paint.system.core import extension
 import omni.ui as ui
 import omni.kit.commands
@@ -71,6 +71,7 @@ class Paint_tool(omni.ext.IExt):
         print(dir(cam))
 #needs to set invisible plane based on the angle and distance of the camera
 #add the plane on top of the z stack
+# not related with z stack, z stack is more related with windows, but the plane is in the world scene
         
     def layer_helper(self):
         self.cam_wrapper = CameraWrapper()

@@ -64,3 +64,4 @@ how to create own regular brushes
 	- how to change the mouse event listener to:
 		- when pressed, paint
 		- when release, stop
+how to distinguish ground plane and wall plane, is there a way to rename it
