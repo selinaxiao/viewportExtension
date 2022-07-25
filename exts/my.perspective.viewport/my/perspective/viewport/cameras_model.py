@@ -1,3 +1,7 @@
+"""
+This credit goes to our beloved TA John Wolford
+"""
+
 from pxr import Usd, UsdGeom
 
 import carb
