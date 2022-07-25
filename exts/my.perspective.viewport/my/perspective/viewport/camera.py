@@ -34,6 +34,8 @@ class CameraWrapper:
     def __init__(self,viewport_api= None):
         self.viewport_api= viewport_api
         self.cam_count = 0
+        self.ortho_proj = False
+        self.iso_proj = False
         
 
     def on_shutdown(self):
@@ -158,6 +160,8 @@ class CameraWrapper:
                  camera.GetAttribute('xformOp:transform').Get())
 
         self.persp_to_orth()
+        self.ortho_proj = True
+        self.iso_proj = False
 
     def change_aperture(self, aperture_ratio):
             camera = omni.usd.get_prim_at_path(self.viewport_api.camera_path)
@@ -254,6 +258,8 @@ class CameraWrapper:
 
 
         self.persp_to_orth()
+        self.ortho_proj = False
+        self.iso_proj = True
 
     def create_cam_helper(self):
         omni.kit.commands.execute('CreatePrimWithDefaultXform',

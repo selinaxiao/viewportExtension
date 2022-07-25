@@ -6,7 +6,7 @@ from omni.kit.window.toolbar import SimpleToolButton
 import functools
 
 class ButtonSelectionWindow:
-    def __init__(self,window_name,buttons,width=200, height=70,button_width=30,button_height=30):
+    def __init__(self,window_name,buttons,width=200, height=150,button_width=30,button_height=30):
         self.buttons = buttons
         self.window_name= window_name
         self.width=width
@@ -17,16 +17,19 @@ class ButtonSelectionWindow:
         self.sliders = None
     
     def set_up_window(self, plane):
-        sliders = []
+        paint_buttons = []
         self.window_object = ui.Window(self.window_name, width=self.width, height=self.height)
         with self.window_object.frame:
             with ui.VStack():
                 with ui.HStack():
                     for k,v in self.buttons.items():
                         ui.Button(k, width=self.button_width, height=self.button_height, clicked_fn= v)
+                with ui.HStack():
+                    paint_buttons.append(ui.Button("Start Painting"))
+                    paint_buttons.append(ui.Button("End Painting"))
         if plane is None:
             self.window_object.visible = False
-        return sliders
+        return paint_buttons
 
                 
     def on_shutdown(self):

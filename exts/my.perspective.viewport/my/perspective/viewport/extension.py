@@ -156,7 +156,7 @@ class MyExtension(omni.ext.IExt):
                 self.cam_wrapper.viewport_api = self.viewport_api
                 labels_list = [
                     ["Ortho", self.ortho_window_helper, self.ortho_remover],
-                    ["Persp", self.cam_wrapper.orth_to_persp, None],
+                    ["Persp", self.persp_window_helper, self.persp_remover],
                     ["Iso", self.iso_window_helper, self.iso_remover]
                 ]
                 self.proj_slider_wrapper = SliderWrapper(labels_list)
@@ -254,8 +254,6 @@ class MyExtension(omni.ext.IExt):
 
 
 
-
-
     def icon_start_helper(self, ext_path):
         """
         Add five icons on the side: Zoning envolope, Projection, Texture, Sunstudy, Wind Simulation
@@ -293,6 +291,9 @@ class MyExtension(omni.ext.IExt):
     def iso_remover(self):
         self.iso_window=None
 
+    def persp_remover(self):
+        self.persp_window = None
+
     def ortho_window_helper(self):
         """
         get window for orthographic projection
@@ -325,6 +326,15 @@ class MyExtension(omni.ext.IExt):
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
         self.iso_window.set_up_window(self.current_plane)
+
+    def persp_window_helper(self):
+        buttons = {
+            "Persp" : lambda:self.cam_wrapper.orth_to_persp(),
+            "Orth" : lambda:self.cam_wrapper.persp_to_orth()
+        }
+        self.persp_window = ButtonSelectionWindow("Perspective Selection",buttons)
+        self.persp_window.set_up_window(self.current_plane)
+
 
     def add_target_helper(self):
         """
@@ -498,7 +508,8 @@ class MyExtension(omni.ext.IExt):
         plane_index = self.plane_combobox.model.get_item_value_model().get_value_as_int()
         self.current_plane = self.planes[plane_index]
         self.proj_slider_wrapper.slider.enabled = True
-        print(self.current_plane.GetAttribute('primvars:displayOpacity').Set(0.5))
+        print(self.current_plane.GetAttribute('primvars:displayOpacity'))
+        #need to find how to create a VtArray to change the opacity
     
     def target_combobox_selection_helper(self):
         target_index = self.target_combobox.model.get_item_value_model().get_value_as_int()

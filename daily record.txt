@@ -38,15 +38,29 @@ other things to do:
 	change the inital window to be triggered by toggling side icons
 	add specs to methods
 
-<<<<<<< HEAD
 7/21
 Conversation with Robert: incorporate in focal length and aperature (slider or string field and a set of common focal length)
 17mm 28mm 85mm 200mm
 This only applies for perspective
 
-=======
-
 snap 
 record history
 add focus function 
->>>>>>> 600abf3633a45bd3e91e261c97a4d9a8ce966eac
+
+7/24/2022
+what done today:
+added plane selection and target selection
+fixed incorrect position of the camera dur to scaling of the plane
+added two more views for orthographic projection 
+
+Things to do in the future and problems:
+can't directly recreate omniverse paint ui, need to find a new way to create the paint library
+can probably still retain their ui, but need to add a default brush to the brush library
+starts with orthographic proj and craeting planes for it
+	- need to find a way to change display opacity of the plane, found the parameter, but need to create correct input
+	- need to decide how large the plane should be, especially how high should the plane be
+		- where should the plane be when it's top view
+how to create own regular brushes
+	- how to change the mouse event listener to:
+		- when pressed, paint
+		- when release, stop
