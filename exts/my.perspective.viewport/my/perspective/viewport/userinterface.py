@@ -77,10 +77,10 @@ class IconWindow:
 
 
 class SliderWrapper:
-    def __init__(self, labels_list, slider_min=0, slider_max=2,style = {"font_size": 7}, enabled = False, visible = False, black=0xFFDDDDDD , white=0xFF000000 ):
+    def __init__(self, labels_list, style = {"font_size": 7}, enabled = False, visible = False, black=0xFFDDDDDD , white=0xFF000000 ):
         self.labels_list = labels_list
-        self.slider_min = slider_min
-        self.slider_max = slider_max
+        self.slider_min = 0
+        self.slider_max = len(labels_list)-1
         self.style = style
         self.enabled = enabled
         self.visible = visible
@@ -91,6 +91,7 @@ class SliderWrapper:
     
     def set_up_slider(self):
         self.slider = ui.IntSlider(min=self.slider_min, max=self.slider_max, style = self.style, enabled = self.enabled, visible = self.visible)
+        self.slider.set_style({"color":0x00FFFFFF})
         self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
 
         with ui.HStack():

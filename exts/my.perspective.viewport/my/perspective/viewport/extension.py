@@ -164,7 +164,8 @@ class MyExtension(omni.ext.IExt):
                 labels_list = [
                     ["Ortho", self.ortho_window_helper, self.ortho_remover],
                     ["Persp", self.persp_window_helper, self.persp_remover],
-                    ["Iso", self.iso_window_helper, self.iso_remover]
+                    ["Iso", self.iso_window_helper, self.iso_remover], 
+                    ["Dim", self.dim_window_helper, self.dim_remover]
                 ]
                 self.proj_slider_wrapper = SliderWrapper(labels_list)
 
@@ -304,6 +305,10 @@ class MyExtension(omni.ext.IExt):
         self.persp_window = None
         self.screenshot_window.change_window_visibility(False)
 
+    def dim_remover(self):
+        self.dim_window = None
+        self.screenshot_window.change_window_visibility(False)
+
     def ortho_window_helper(self):
         """
         get window for orthographic projection
@@ -356,6 +361,24 @@ class MyExtension(omni.ext.IExt):
         paint_buttons = self.persp_window.set_up_window(self.current_plane)
         self.persp_paint_expt = paint_buttons[0]
         self.persp_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
+    
+    def dim_window_helper(self):
+        """
+        get window for isometric projection
+        Contains three options for isometric projection: top, front, right
+        Updating dim window and dim slider
+        """
+        buttons = {
+        "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_plane, self.current_target),
+        "NW":lambda:self.cam_wrapper.iso_helper("NW", self.current_plane, self.current_target),
+        "SE":lambda:self.cam_wrapper.iso_helper("SE", self.current_plane, self.current_target),
+        "SW":lambda:self.cam_wrapper.iso_helper("SW", self.current_plane, self.current_target)
+        }
+
+        self.dim_window = ButtonSelectionWindow("Dimetric Selection",buttons)
+        paint_buttons = self.dim_window.set_up_window(self.current_plane)
+        self.dim_paint_expt = paint_buttons[0]
+        self.dim_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
 
     def add_target_helper(self):
         """
