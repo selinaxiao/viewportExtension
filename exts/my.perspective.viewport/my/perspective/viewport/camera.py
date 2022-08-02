@@ -37,6 +37,7 @@ class CameraWrapper:
         self.cam_count = 0
         self.ortho_proj = False
         self.iso_proj = False
+        self.dim_proj = False
         self.ortho_opt = None
         self.iso_opt = None
         
@@ -165,6 +166,7 @@ class CameraWrapper:
         self.persp_to_orth()
         self.ortho_proj = True
         self.iso_proj = False
+        self.dim_proj = False
         self.ortho_opt = option
 
     def change_aperture(self, aperture_ratio):
@@ -268,6 +270,7 @@ class CameraWrapper:
         self.persp_to_orth()
         self.ortho_proj = False
         self.iso_proj = True
+        self.dim_proj = False
     
     def dim_helper(self, angle:str, current_plane = None, current_target=None):
         self.iso_helper(angle, current_plane, current_target)
@@ -321,44 +324,34 @@ class CameraWrapper:
                 prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
                 value=Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi, 0.0, 315+rot),
                 prev=Gf.Vec3d(0.0, 0.0, 0.0))
+            
+        self.ortho_proj = False
+        self.iso_proj = False
+        self.dim_proj = True
         
     def drag_helper(self, drag):
+        if not self.dim_proj:
+            return
+            
         value = drag.get_value_as_float()
-        print(value)
         cam_path = str(self.viewport_api.camera_path)
         index = cam_path.rfind('/')
         dimetric_center = omni.usd.get_prim_at_path(Sdf.Path('/World/Dimetric_center'))
         center_rot = dimetric_center.GetAttribute('xformOp:rotateXYZ').Get()
        
-
         omni.kit.commands.execute('MovePrim',
             path_from=cam_path,
             path_to=f'/World/Dimetric_center/{cam_path[index+1:]}')
-        camera = omni.usd.get_prim_at_path(Sdf.Path(f'/World/Dimetric_center/{cam_path[index+1:]}'))
-        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
 
         omni.kit.commands.execute('ChangeProperty',
             prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
             value=Gf.Vec3d(90-value, center_rot[1], center_rot[2]),
             prev=center_rot)
-        
-        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
+
         
         omni.kit.commands.execute('MovePrim',
             path_from=f'/World/Dimetric_center/{cam_path[index+1:]}',
             path_to=cam_path)
-        
-        camera = omni.usd.get_prim_at_path(Sdf.Path(cam_path))
-        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
-        cam_rot = camera.GetAttribute('xformOp:rotateXYZ').Get()
-
-        # omni.kit.commands.execute('ChangeProperty',
-        #     prop_path=f"{cam_path}.xformOp:rotateXYZ",
-        #     value=Gf.Vec3d(cam_rot[0], cam_rot[1], cam_rot[2]+180),
-        #     prev=cam_rot)
-        
-        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
-
 
 
     def create_cam_helper(self):

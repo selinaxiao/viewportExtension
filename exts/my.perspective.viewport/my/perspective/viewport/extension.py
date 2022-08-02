@@ -309,6 +309,9 @@ class MyExtension(omni.ext.IExt):
     def dim_remover(self):
         self.dim_window = None
         self.screenshot_window.change_window_visibility(False)
+        omni.kit.commands.execute('DeletePrims',
+            paths=['/World/Dimetric_center'])
+
 
     def ortho_window_helper(self):
         """

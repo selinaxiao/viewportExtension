@@ -30,11 +30,11 @@ class ButtonSelectionWindow:
                 with ui.HStack():
                     for k,v in self.buttons[0].items():
                         ui.Button(k, width=self.button_width, height=self.button_height, clicked_fn= v)
-                if len(self.buttons)>1:
+                if self.buttons[1]:
                     with ui.HStack():
                         ui.Label("Elevation angle")
                         drag = ui.FloatDrag(min=0, max = 90)
-                        drag.model.set_value(90-180*math.atan(1/math.sqrt(2))/math.pi)
+                        drag.model.set_value(180*math.atan(1/math.sqrt(2))/math.pi)
                 with ui.HStack():
                     paint_buttons.append(ui.Button("Export Image"))
         if plane is None:
