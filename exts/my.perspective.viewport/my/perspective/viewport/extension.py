@@ -18,6 +18,7 @@ from .adobe import AdobeInterface
 
 
 
+
 # from omni.ui._ui import CanvasFrame
 
 # from omni.paint.system.core import extension
@@ -315,16 +316,16 @@ class MyExtension(omni.ext.IExt):
         Contains three options for orthographic projection: top, front, right
         Updating ortho window and ortho slider
         """
-        buttons = { 
+        buttons = ({ 
         "Top": lambda: self.cam_wrapper.ortho_helper('top', self.current_plane, self.current_target),
         "Front":lambda: self.cam_wrapper.ortho_helper('front', self.current_plane, self.current_target),
         "Back" : lambda: self.cam_wrapper.ortho_helper('back', self.current_plane, self.current_target),
         "Right":lambda: self.cam_wrapper.ortho_helper('right', self.current_plane, self.current_target),
         "Left" : lambda: self.cam_wrapper.ortho_helper('left', self.current_plane, self.current_target)
-        }
+        }, False)
 
         self.ortho_window = ButtonSelectionWindow("Orthographic Selection",buttons)
-        paint_buttons = self.ortho_window.set_up_window(self.current_plane)
+        paint_buttons = self.ortho_window.set_up_window(self.current_plane)[0]
         self.ortho_paint_expt = paint_buttons[0]
         self.ortho_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
         # self.ortho_opt = self.ortho_window.ortho_opt
@@ -340,25 +341,25 @@ class MyExtension(omni.ext.IExt):
         Contains three options for isometric projection: top, front, right
         Updating iso window and iso slider
         """
-        buttons = {
+        buttons = ({
         "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_plane, self.current_target),
         "NW":lambda:self.cam_wrapper.iso_helper("NW", self.current_plane, self.current_target),
         "SE":lambda:self.cam_wrapper.iso_helper("SE", self.current_plane, self.current_target),
         "SW":lambda:self.cam_wrapper.iso_helper("SW", self.current_plane, self.current_target)
-        }
+        }, False)
 
         self.iso_window = ButtonSelectionWindow("Isometric Selection",buttons)
-        paint_buttons = self.iso_window.set_up_window(self.current_plane)
+        paint_buttons = self.iso_window.set_up_window(self.current_plane)[0]
         self.iso_paint_expt = paint_buttons[0]
         self.iso_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
 
     def persp_window_helper(self):
-        buttons = {
+        buttons = ({
             "Persp" : lambda:self.cam_wrapper.orth_to_persp(),
             "Orth" : lambda:self.cam_wrapper.persp_to_orth()
-        }
+        }, False)
         self.persp_window = ButtonSelectionWindow("Perspective Selection",buttons)
-        paint_buttons = self.persp_window.set_up_window(self.current_plane)
+        paint_buttons = self.persp_window.set_up_window(self.current_plane)[0]
         self.persp_paint_expt = paint_buttons[0]
         self.persp_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
     
@@ -368,15 +369,19 @@ class MyExtension(omni.ext.IExt):
         Contains three options for isometric projection: top, front, right
         Updating dim window and dim slider
         """
-        buttons = {
-        "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_plane, self.current_target),
-        "NW":lambda:self.cam_wrapper.iso_helper("NW", self.current_plane, self.current_target),
-        "SE":lambda:self.cam_wrapper.iso_helper("SE", self.current_plane, self.current_target),
-        "SW":lambda:self.cam_wrapper.iso_helper("SW", self.current_plane, self.current_target)
-        }
+        buttons = ({
+        "NE": lambda:self.cam_wrapper.dim_helper("NE", self.current_plane, self.current_target),
+        "NW":lambda:self.cam_wrapper.dim_helper("NW", self.current_plane, self.current_target),
+        "SE":lambda:self.cam_wrapper.dim_helper("SE", self.current_plane, self.current_target),
+        "SW":lambda:self.cam_wrapper.dim_helper("SW", self.current_plane, self.current_target)
+        }, True)
 
         self.dim_window = ButtonSelectionWindow("Dimetric Selection",buttons)
-        paint_buttons = self.dim_window.set_up_window(self.current_plane)
+        return_val = self.dim_window.set_up_window(self.current_plane)
+        paint_buttons = return_val[0]
+        drag = return_val[1]
+
+        self.dim_drag = drag.model.subscribe_value_changed_fn(self.cam_wrapper.drag_helper)
         self.dim_paint_expt = paint_buttons[0]
         self.dim_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
 

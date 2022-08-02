@@ -2,6 +2,7 @@ import omni.ext
 
 from pxr import Sdf, Gf, UsdGeom, Usd
 import math
+import omni.ui as ui
 
 def translate(x,y,z):
     """
@@ -214,15 +215,19 @@ class CameraWrapper:
 
         if 'xformOp:transform' not in order_list:
             if angle == "NW":
+                print("iso NW")
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-y_trans, y_pos+x_trans, z_pos+proj_dist))
                 camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,225+rot))
             elif angle == "NE":
+                print("iso NE")
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+x_trans, y_pos+y_trans, z_pos+proj_dist))
                 camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,135+rot))
             elif angle == "SE":
+                print("iso SE")
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos+y_trans, y_pos-x_trans, z_pos+proj_dist))
                 camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,45+rot))
             elif angle == "SW":
+                print("iso SW")
                 camera.GetAttribute('xformOp:translate').Set(Gf.Vec3d(x_pos-x_trans, y_pos-y_trans, z_pos+proj_dist))
                 camera.GetAttribute('xformOp:rotateXYZ').Set(Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi,0,315+rot))
         
@@ -263,6 +268,98 @@ class CameraWrapper:
         self.persp_to_orth()
         self.ortho_proj = False
         self.iso_proj = True
+    
+    def dim_helper(self, angle:str, current_plane = None, current_target=None):
+        self.iso_helper(angle, current_plane, current_target)
+
+        if current_plane is None:
+            return 
+        if current_target is None:
+            target_pos = (0, 0, 0)
+            target_rot = 0
+        else:
+            target_pos = current_target.GetAttribute('xformOp:translate').Get()
+            target_rot = current_target.GetAttribute(UsdGeom.Xformable(current_target).GetOrderedXformOps()[1].GetOpName()).Get()[2]
+
+        
+        plane_pos = current_plane.GetAttribute('xformOp:translate').Get()
+        plane_rot = current_plane.GetAttribute('xformOp:rotateXYZ').Get()[2]
+        plane_scale = current_plane.GetAttribute('xformOp:scale').Get()
+
+        x_pos = target_pos[0]*plane_scale[0]+plane_pos[0]
+        y_pos = target_pos[1]*plane_scale[1]+plane_pos[1]
+        z_pos = target_pos[2]*plane_scale[2]+plane_pos[2]
+        rot = plane_rot+target_rot
+
+        omni.kit.commands.execute('CreatePrimWithDefaultXform',
+            prim_type='Xform', prim_path = '/World/Dimetric_center',
+            attributes={},
+            select_new_prim=False)
+
+        omni.kit.commands.execute('ChangeProperty',
+            prop_path=Sdf.Path('/World/Dimetric_center.xformOp:translate'),
+            value=Gf.Vec3d(x_pos, y_pos, z_pos),
+            prev=Gf.Vec3d(0.0, 0.0, 0.0))
+
+        if angle == "NW":
+            omni.kit.commands.execute('ChangeProperty',
+                prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
+                value=Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi, 0.0, 225+rot),
+                prev=Gf.Vec3d(0.0, 0.0, 0.0))
+        elif angle == "NE":
+           omni.kit.commands.execute('ChangeProperty',
+                prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
+                value=Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi, 0.0, 135+rot),
+                prev=Gf.Vec3d(0.0, 0.0, 0.0))
+        elif angle == "SE":
+            omni.kit.commands.execute('ChangeProperty',
+                prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
+                value=Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi, 0.0, 45+rot),
+                prev=Gf.Vec3d(0.0, 0.0, 0.0))
+        elif angle == "SW":
+           omni.kit.commands.execute('ChangeProperty',
+                prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
+                value=Gf.Vec3d(90-180*math.atan(1/math.sqrt(2))/math.pi, 0.0, 315+rot),
+                prev=Gf.Vec3d(0.0, 0.0, 0.0))
+        
+    def drag_helper(self, drag):
+        value = drag.get_value_as_float()
+        print(value)
+        cam_path = str(self.viewport_api.camera_path)
+        index = cam_path.rfind('/')
+        dimetric_center = omni.usd.get_prim_at_path(Sdf.Path('/World/Dimetric_center'))
+        center_rot = dimetric_center.GetAttribute('xformOp:rotateXYZ').Get()
+       
+
+        omni.kit.commands.execute('MovePrim',
+            path_from=cam_path,
+            path_to=f'/World/Dimetric_center/{cam_path[index+1:]}')
+        camera = omni.usd.get_prim_at_path(Sdf.Path(f'/World/Dimetric_center/{cam_path[index+1:]}'))
+        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
+
+        omni.kit.commands.execute('ChangeProperty',
+            prop_path=Sdf.Path('/World/Dimetric_center.xformOp:rotateXYZ'),
+            value=Gf.Vec3d(90-value, center_rot[1], center_rot[2]),
+            prev=center_rot)
+        
+        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
+        
+        omni.kit.commands.execute('MovePrim',
+            path_from=f'/World/Dimetric_center/{cam_path[index+1:]}',
+            path_to=cam_path)
+        
+        camera = omni.usd.get_prim_at_path(Sdf.Path(cam_path))
+        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
+        cam_rot = camera.GetAttribute('xformOp:rotateXYZ').Get()
+
+        # omni.kit.commands.execute('ChangeProperty',
+        #     prop_path=f"{cam_path}.xformOp:rotateXYZ",
+        #     value=Gf.Vec3d(cam_rot[0], cam_rot[1], cam_rot[2]+180),
+        #     prev=cam_rot)
+        
+        print(camera.GetAttribute('xformOp:rotateXYZ').Get())
+
+
 
     def create_cam_helper(self):
         omni.kit.commands.execute('CreatePrimWithDefaultXform',
