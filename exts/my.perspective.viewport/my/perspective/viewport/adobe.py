@@ -20,6 +20,9 @@ import carb.settings
 
 from .cameras_model import CamerasModel
 
+import subprocess
+import os
+
 COLUMN_WIDTH_PIXELS = 150
 
 DEFAULT_FILE_EXTENSION_TYPES = [
@@ -172,6 +175,20 @@ class AdobeInterface():
         print(self._expfileextension)
         self._capture_instance.start()
         print("Export End")
+
+        FNULL = open(os.devnull,'w')
+        image = str(self._expdirname)+str(self._expfilename)+str(self._expfileextension)
+        modImage=""
+        for char in range(0, len(image)):
+            if(image[char] == '/'):
+                modImage += r"\\"
+            else:
+                modImage += image[char]
+        print(image+"!!!!")
+        print(modImage+"!!!!mod")
+        assert os.path.isfile(modImage)
+        args = f"C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe --open {modImage}"
+        subprocess.call( args,stdout=FNULL,stderr=FNULL, shell=False)
 
     def import_image(self):
         print("Import")

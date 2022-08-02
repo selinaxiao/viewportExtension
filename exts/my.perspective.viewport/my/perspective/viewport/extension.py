@@ -15,6 +15,8 @@ from .userinterface import ButtonSelectionWindow, IconWindow, SideIconWrapper, S
 # from .paint_tool import PaintToolInContext
 from .adobe import AdobeInterface
 
+import os 
+import subprocess
 
 
 
@@ -79,6 +81,10 @@ class MyExtension(omni.ext.IExt):
         self.icon_start_helper(self.ext_path)
         self.ext_id = ext_id
         self.screenshot_window = AdobeInterface()
+
+        
+
+       
 
 
         # self.screenshot_window._window.visible = False
@@ -272,7 +278,8 @@ class MyExtension(omni.ext.IExt):
             ("Projection", "Projection: Ortho/ Persp/ Iso", "Camera.png", "Camera.png", Key.P, lambda c: self.proj_icon_helper(c)), 
             ("Streetview", "Streetview", "VR.png", "VR.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
             ("Sun Study", "Sun Study", "sun.png", "sun.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Acoustic Analysis", "Acoustic Analysis", "Acoustic.png", "Acoustic.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
+            ("Acoustic Analysis", "Acoustic Analysis", "Acoustic.png", "Acoustic.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("test", "test", "Acoustic.png", "Acoustic.png", Key.E, lambda c: self.quick())
 
         ]
 
@@ -590,3 +597,11 @@ class MyExtension(omni.ext.IExt):
 
     # def ortho_paint_start_helper(self, option):
     #     if option == "Top":
+
+    def quick(self,image = "C:\\Users\\LabUser\\Pictures\\OmniBeehive\\Fun.png"):
+        # os.system('cmd /k "cd C:\Program Files\Adobe\Adobe Photoshop 2022"')
+        # os.system('cmd /k "Photoshop.exe --open "C:\\Users\\LabUser\\Pictures\\OmniBeehive\\Fun.png""')
+        FNULL = open(os.devnull,'w')
+        assert os.path.isfile(image)
+        args = f"C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe --open {image}"
+        subprocess.call( args,stdout=FNULL,stderr=FNULL, shell=False)
