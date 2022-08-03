@@ -316,8 +316,12 @@ class MyExtension(omni.ext.IExt):
     def dim_remover(self):
         self.dim_window = None
         self.screenshot_window.change_window_visibility(False)
-        omni.kit.commands.execute('DeletePrims',
-            paths=['/World/Dimetric_center'])
+        print("remove dim center")
+        try:
+            omni.kit.commands.execute('DeletePrims',
+                paths=['/World/Dimetric_center'])
+        except:
+            pass
 
 
     def ortho_window_helper(self):
@@ -399,8 +403,10 @@ class MyExtension(omni.ext.IExt):
         """
         Add a target at the center of the current plane in the world
         """
+        
         if self.current_plane is None:
             return 
+        
 
         mesh_path = os.path.join(self.ext_path, "mesh")
         try:
@@ -601,7 +607,31 @@ class MyExtension(omni.ext.IExt):
     def quick(self,image = "C:\\Users\\LabUser\\Pictures\\OmniBeehive\\Fun.png"):
         # os.system('cmd /k "cd C:\Program Files\Adobe\Adobe Photoshop 2022"')
         # os.system('cmd /k "Photoshop.exe --open "C:\\Users\\LabUser\\Pictures\\OmniBeehive\\Fun.png""')
-        FNULL = open(os.devnull,'w')
-        assert os.path.isfile(image)
-        args = f"C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe --open {image}"
-        subprocess.call( args,stdout=FNULL,stderr=FNULL, shell=False)
+        # FNULL = open(os.devnull,'w')
+        # assert os.path.isfile(image)
+        # args = f"C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe --open {image}"
+        # subprocess.call( args,stdout=FNULL,stderr=FNULL, shell=False)
+        ##HOW TO SET RESOLUTION
+        # self.__window.viewport_api._viewport_texture._ViewportTexture__setup_resolution((3840,2160)
+        test = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport.get_instances().gi_frame.f_trace
+        
+        # _ViewportWindow__viewport_layers
+        print('~'*30)
+        print(dir(self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport.get_instances()))
+        print('~'*30)
+        print(test)
+        print(dir(test))
+       
+        # #set and get resolution
+        # test._ViewportTexture__setup_resolution((1920,1080))
+        # print(test.resolution)
+
+        # # import inspect 
+        # # print(inspect.getattr_static(test))
+
+        # print(test.frame_info,type(test.frame_info))
+
+ 
+        
+
+        

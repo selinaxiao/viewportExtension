@@ -21,7 +21,7 @@ import carb.settings
 from .cameras_model import CamerasModel
 
 import subprocess
-import os
+import glob
 
 COLUMN_WIDTH_PIXELS = 150
 
@@ -167,7 +167,7 @@ class AdobeInterface():
         self._export_label.text = "Export Path: " + ((self._expdirname + self._expfilename)[0:8] + "..." if self._expfilename != None else "")
         self._import_label.text = "Import Path: " + ((self._impdirname + self._impfilename)[0:8] + "..." if self._impfilename != None else "")
 
-    def export_view(self):
+    def save_view(self):
         print("Export Start")
         self.setup_dynamic_capture_options()
         print(self._expdirname)
@@ -176,17 +176,22 @@ class AdobeInterface():
         self._capture_instance.start()
         print("Export End")
 
+    def export_view(self):
         FNULL = open(os.devnull,'w')
-        image = str(self._expdirname)+str(self._expfilename)+str(self._expfileextension)
         modImage=""
-        for char in range(0, len(image)):
-            if(image[char] == '/'):
+        
+        list_of_files = glob.glob(f'{str(self._expdirname)}/*')
+        latest_file = max(list_of_files, key=os.path.getctime)
+
+        for char in range(0, len(latest_file)):
+            if(latest_file[char] == '/'):
                 modImage += r"\\"
             else:
-                modImage += image[char]
-        print(image+"!!!!")
-        print(modImage+"!!!!mod")
-        assert os.path.isfile(modImage)
+                modImage += latest_file[char]
+        # print(latest_file+"!!!!")
+        # print(modImage+"!!!!mod")
+
+        os.path.isfile(modImage)
         args = f"C:\\Program Files\\Adobe\\Adobe Photoshop 2022\\Photoshop.exe --open {modImage}"
         subprocess.call( args,stdout=FNULL,stderr=FNULL, shell=False)
 
@@ -203,6 +208,7 @@ class AdobeInterface():
 
     def setup_static_capture_options(self):
         # Capture Options
+        
         self._capture_instance.options.movie_type = omni.kit.capture.viewport.CaptureMovieType.SEQUENCE
 
         # Render Options
@@ -220,6 +226,8 @@ class AdobeInterface():
         self._capture_instance.options.overwrite_existing_frames = True
         self._capture_instance.options.save_alpha = False
         self._capture_instance.options.hdr_output = False
+
+        print(type(self._capture_instance._viewport.get_viewport_window()),"HEREEEEE")
         
     def change_window_visibility(self, visible):
         self._window.visible = visible
@@ -266,14 +274,16 @@ class AdobeInterface():
                             self._ui_res_height_input = ui.IntField(alignment=ui.Alignment.CENTER_TOP, width=ui.Percent(90))
                             self._ui_res_height_input.model.set_value(1080)
                 ui.Spacer(height=ui.Pixel(25))
+                ui.Button("Save", clicked_fn=lambda: self.save_view())
+                ui.Button("Export to Photoshop", clicked_fn=lambda: self.export_view())
+                ui.Spacer(height=ui.Pixel(25))
                 ui.Label("Import Settings", height = ui.Pixel(30), alignment=ui.Alignment.CENTER)
                 with ui.HStack(height=ui.Pixel(30)):
                     self._import_label = ui.Label("Import Path: ", width=ui.Pixel(COLUMN_WIDTH_PIXELS))
                     ui.Button("Browse", clicked_fn=lambda: self.on_imp_browse_clicked())
                     ui.Button("Clear", clicked_fn=lambda: self.on_imp_clear_clicked())
                 
-                ui.Spacer(height=ui.Pixel(50))
-                ui.Button("Export", clicked_fn=lambda: self.export_view())
+                ui.Spacer(height=ui.Pixel(25))
                 ui.Button("Import", clicked_fn=lambda: self.import_image())
 
         self.setup_static_capture_options()

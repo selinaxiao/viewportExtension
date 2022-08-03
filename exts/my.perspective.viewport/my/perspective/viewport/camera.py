@@ -103,7 +103,7 @@ class CameraWrapper:
         for a in order:
             order_list.append(a.GetOpName())
 
-        focusdistance = max(400, self.get_selected_cam_attribute('focusDistance'))
+        focusdistance = max(1200, 3*self.get_selected_cam_attribute('focusDistance'))
 
         if 'xformOp:transform' not in order_list:
             if option == "top":
@@ -332,7 +332,7 @@ class CameraWrapper:
     def drag_helper(self, drag):
         if not self.dim_proj:
             return
-            
+
         value = drag.get_value_as_float()
         cam_path = str(self.viewport_api.camera_path)
         index = cam_path.rfind('/')
