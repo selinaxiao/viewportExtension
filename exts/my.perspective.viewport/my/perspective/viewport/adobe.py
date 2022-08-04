@@ -239,6 +239,7 @@ class AdobeInterface():
 
         viewport = vp.get_viewport_interface()
         self._viewport_window = viewport.get_viewport_window()
+        print(type(self._viewport_window), "hiiiiiii")
 
         self._capture_instance = omni.kit.capture.viewport.CaptureExtension.get_instance()
 

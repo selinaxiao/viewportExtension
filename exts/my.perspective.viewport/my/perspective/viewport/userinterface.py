@@ -8,7 +8,21 @@ from .adobe import AdobeInterface
 import math
 
 class ButtonSelectionWindow:
+    """
+    Create windows with buttons for projections
+    """
     def __init__(self,window_name,buttons,width=200, height=150,button_width=30,button_height=30):
+        """
+        window_name: a string that describes the name of the window
+        button: a tuple that has the form (disctionary, boolean). 
+                For the dictionary, each key is the name of the button, and each value of the key is the trigger 
+                function for the corresponding button
+                For the boolean, it repersents whether there is an extra FloatDrag
+        width: width of the window
+        height: height of the window
+        button_width: width of the buttons
+        button_height: height of the buttons
+        """
         self.buttons = buttons
         self.window_name= window_name
         self.width=width
@@ -20,7 +34,8 @@ class ButtonSelectionWindow:
     
     def set_up_window(self, plane):
         """
-        NEed to first choose a projection, then the paint button is enabled
+        Set up the window
+        if there is no selected plane, then the window will not show up
         """
         paint_buttons = []
         self.window_object = ui.Window(self.window_name, width=self.width, height=self.height)
@@ -43,17 +58,24 @@ class ButtonSelectionWindow:
 
                 
     def on_shutdown(self):
+        """
+        close the window
+        """
         self.window_object = None
         
                
 class IconWindow:
     def __init__(self, window_name, buttons,width=800, height=600):
         """
+        window_name: a string taht describes the name of the window
         buttons:
-        a dictionary of
-        key: name of collapsable frame
-        value: a list of tuples
-        where teh tuples contains (whether only label,name of label, whether there is a combobox, text on the button, callback fn of the button)
+        a dictionary that has
+            key: name of collapsable frame
+            value: a list of tuples, where the tuples contains (whether only label,name of label, 
+            whether there is a combobox, text on the button, callback fn of the button).
+            Each tuple represents a sub-section under the collapsable frame
+        width: width of the window
+        height: height of the window
         """
         self.buttons = buttons
         self.window_name= window_name
@@ -62,6 +84,10 @@ class IconWindow:
         self.window_object = None
     
     def set_up_window(self):
+        """
+        Set up the window
+        if there is no selected plane, then the window will not show up
+        """
         combobox = []
         self.window_object = ui.Window(self.window_name, width=self.width, height=self.height, visible=False)
         with self.window_object.frame:
@@ -82,9 +108,17 @@ class IconWindow:
         # self.window_object.visible = False
         return combobox
 
+    def on_shutdown(self):
+        """
+        close the window
+        """
+        self.window_object = None
 
 class SliderWrapper:
     def __init__(self, labels_list, style = {"font_size": 7}, enabled = False, visible = False, black=0xFFDDDDDD , white=0xFF000000 ):
+        """
+        labels_list: all the options appearing on the slider
+        """
         self.labels_list = labels_list
         self.slider_min = 0
         self.slider_max = len(labels_list)-1
@@ -97,6 +131,7 @@ class SliderWrapper:
         self.slider=None
     
     def set_up_slider(self):
+        """set up the slider"""
         self.slider = ui.IntSlider(min=self.slider_min, max=self.slider_max, style = self.style, enabled = self.enabled, visible = self.visible)
         self.slider.set_style({"color":0x00FFFFFF})
         self.slider.set_mouse_released_fn(lambda x, y, a, b: self.slider_helper(x, y, a, b))
@@ -107,6 +142,10 @@ class SliderWrapper:
                 self.ui_labels.append(ui.Label(self.labels_list[a][0], alignment = ui.Alignment.CENTER_TOP, visible = self.visible))
             
     def slider_helper(self, x, y, a, b):
+        """
+        Show the corresponding window triggered by each option on the slider
+        Change the color of the labels for each option: white when not selected and black when selected
+        """
         index = self.slider.model.get_value_as_int()
         for i in range(len(self.ui_labels)):
             if index == i:
@@ -118,6 +157,9 @@ class SliderWrapper:
                     self.labels_list[i][2]()
 
     def set_label_visibility(self, c):
+        """
+        when the side icon for projection is not selected, the slider won't show up
+        """
         if self.slider:
             self.slider.visible = c
         for label in self.ui_labels:
@@ -126,6 +168,13 @@ class SliderWrapper:
 
 class SideIconWrapper:
     def __init__(self, ext_path, folder_name="", icon_buttons=None):
+        """
+        ext_path: the ext_path from the extension
+        folder_name: name of the folder that contain all the images for the buttons
+        icon_buttons: a list of tuples. Each tuple represents a button.
+                        Each tuple has the form: (name, tooltip text, image before toggle, image after toggle, hotkey, 
+                        trigger function)
+        """
         self.ext_path = ext_path
         self.icon_path = os.path.join(self.ext_path,folder_name)
         self.icon_buttons = icon_buttons
@@ -134,6 +183,9 @@ class SideIconWrapper:
         self.toolbar = omni.kit.window.toolbar.get_instance()
 
     def set_up_icons(self):
+        """
+        set up the icons on the side
+        """
         self.icons = []
         for button in self.icon_buttons:
             self.icons.append(
@@ -149,6 +201,9 @@ class SideIconWrapper:
             self.pos+=100
 
     def shut_down_icons(self):
+        """
+        remove all the icons from the side
+        """
         for icon in self.icons:
             self.toolbar.remove_widget(icon)
             icon.clean()

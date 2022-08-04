@@ -15,3 +15,91 @@
  '_time', '_time_rate', '_time_subframe_rate', '_timeline', '_to_capture_render_product', '_total_frame_count', '_update_progress_hook', '_update_sub', '_update_sunstudy_player_time', 
 '_usd_context', '_viewport', '_viewport_interface', '_wait_for_image_writing', '_workset_dir', 'cancel', 'capture_finished_fn', 'forward_one_frame_fn', 'get_instance', 'on_shutdown', 
 'on_startup', 'options', 'pause', 'progress', 'progress_update_fn', 'resume', 'show_default_progress_window', 'shutdown', 'start', 'startup'] 
+
+
+
+['_ViewportTexture__1030_hydra_texture', '_ViewportTexture__camera_path', '_ViewportTexture__capture_delegates', '_ViewportTexture__create_subscription_to_drawable_changed', '_ViewportTexture__current_hd_engine', '
+_ViewportTexture__display_var', '_ViewportTexture__drawable_change_sub', '_ViewportTexture__drawable_changed_fn', '_ViewportTexture__enable_hydra_engine', '_ViewportTexture__ensure_usd_context', '_ViewportTexture__ensure_usd_stage',
+ '_ViewportTexture__frame_info', '_ViewportTexture__g_hd_texture_counter', '_ViewportTexture__hd_texture_name', '_ViewportTexture__hydra_texture', '_ViewportTexture__hydra_texture_factory', '_ViewportTexture__render_settings_changed_fns', 
+ '_ViewportTexture__render_settings_changed_sub', '_ViewportTexture__resolution', '_ViewportTexture__set_hd_engine', '_ViewportTexture__settings', '_ViewportTexture__setup_resolution', '_ViewportTexture__usd_context_name', 
+ '_ViewportTexture__validate_camera', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
+ '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_add_render_settings_changed_fn', 
+ '_on_stage_opened', '_remove_render_settings_changed_fn', '_render_settings_changed', 'camera_path', 'destroy', 'display_render_var', 'frame_info', 'hydra_engine', 'resolution', 'schedule_capture', 'set_hd_engine']
+
+
+
+['_ViewportWindow__added_frames', '_ViewportWindow__clean_instances', '_ViewportWindow__dock_changed', '_ViewportWindow__external_drop', '_ViewportWindow__external_drop_support', 
+'_ViewportWindow__frame_built', '_ViewportWindow__g_default_style', '_ViewportWindow__g_instances', '_ViewportWindow__name', '_ViewportWindow__selected_in_dock_changed', 
+'_ViewportWindow__viewport_layers', '_ViewportWindow__z_stack', '__class__', '__del__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__',
+ '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__',
+  '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'add_external_drag_drop_support', 'auto_resize', 'call_key_pressed_fn', 'deferred_dock_in', 'destroy', 'detachable', 
+  'dock_id', 'dock_in', 'dock_in_window', 'dock_order', 'dock_tab_bar_enabled', 'dock_tab_bar_visible', 'docked', 'exclusive_keyboard', 'flags', 'focus', 'focused', 'frame', 
+  'get_frame', 'get_instances', 'get_window_callback', 'has_key_pressed_fn', 'height', 'is_selected_in_dock', 'menu_bar', 'move_to_app_window', 'name', 'noTabBar', 
+  'notify_app_window_change', 'padding_x', 'padding_y', 'position_x', 'position_y', 'remove_external_drag_drop_support', 'selected_in_dock', 'setPosition', 
+  'set_default_style', 'set_docked_changed_fn', 'set_focused_changed_fn', 'set_height_changed_fn', 'set_key_pressed_fn', 'set_position_x_changed_fn', 
+  'set_position_y_changed_fn', 'set_selected_in_dock_changed_fn', 'set_style', 'set_top_modal', 'set_visibility_changed_fn', 'set_width_changed_fn', 
+  'title', 'undock', 'viewport_api', 'visible', 'width']
+
+ ['_ViewportAPI__ViewportSubscription', '_ViewportAPI__aspect_ratios', '_ViewportAPI__callback_args', '_ViewportAPI__clean_weak_views', '_ViewportAPI__fill_frame',
+  '_ViewportAPI__frame_changed', '_ViewportAPI__get_conform_policy', '_ViewportAPI__hydra_texture', '_ViewportAPI__lock_to_render_result', '_ViewportAPI__ndc_to_world', 
+  '_ViewportAPI__notify_objects', '_ViewportAPI__notify_scene_views', '_ViewportAPI__projection', '_ViewportAPI__render_settings_changed', '_ViewportAPI__scene_views',
+   '_ViewportAPI__set_hydra_texture', '_ViewportAPI__subscribe_to_change', '_ViewportAPI__time', '_ViewportAPI__transform', '_ViewportAPI__updates_enabled',
+    '_ViewportAPI__usd_context_name', '_ViewportAPI__view', '_ViewportAPI__view_changed', '_ViewportAPI__viewport_changed', '_ViewportAPI__viewport_texture', '
+    _ViewportAPI__world_to_ndc', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', 
+    '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', 
+    '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_conform_projection', '_hydra_texture', '_notify_frame_change', '_notify_render_settings_change', 
+    '_settings_path', '_sync_viewport_api', '_viewport_texture', 'add_scene_view', 'camera_path', 'display_render_var', 'fill_frame', 'fps', 'frame_info', 'hydra_engine', 
+    'id', 'lock_to_render_result', 'map_ndc_to_texture', 'map_ndc_to_texture_pixel', 'ndc_to_world', 'pick', 'projection', 'query', 'remove_scene_view', 'render_product_path',
+     'request_pick', 'request_query', 'resolution', 'schedule_capture', 'set_hd_engine', 'set_updates_enabled', 'stage', 'subscribe_to_frame_change', 
+     'subscribe_to_render_settings_change', 'subscribe_to_view_change', 'time', 'transform', 'updates_enabled', 'usd_context', 'usd_context_name', 'view',
+      'viewport_changed', 'wait_for_render_settings_change', 'wait_for_rendered_frames', 'world_to_ndc']
+
+      ['FLAG_WANT_CAPTURE_KEYBOARD', '__class__', '__delattr__', '__dir__', '__doc__', '__enter__', '__eq__', '__exit__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__',
+       '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'add_child', 
+       'call_accept_drop_fn', 'call_build_fn', 'call_computed_content_size_changed_fn', 'call_drag_fn', 'call_drop_fn', 'call_key_pressed_fn', 'call_mouse_double_clicked_fn', 'call_mouse_hovered_fn', 
+       'call_mouse_moved_fn', 'call_mouse_pressed_fn', 'call_mouse_released_fn', 'call_mouse_wheel_fn', 'call_tooltip_fn', 'checked', 'clear', 'computed_content_height', 'computed_content_width', 
+       'computed_height', 'computed_width', 'destroy', 'dragging', 'enabled', 'has_accept_drop_fn', 'has_build_fn', 'has_computed_content_size_changed_fn', 'has_drag_fn', 'has_drop_fn', 'has_key_pressed_fn', 
+       'has_mouse_double_clicked_fn', 'has_mouse_hovered_fn', 'has_mouse_moved_fn', 'has_mouse_pressed_fn', 'has_mouse_released_fn', 'has_mouse_wheel_fn', 'has_tooltip_fn', 'height', 'horizontal_clipping',
+        'identifier', 'name', 'opaque_for_mouse_events', 'rebuild', 'screen_position_x', 'screen_position_y', 'scroll_here', 'scroll_here_x', 'scroll_here_y', 'selected', 'separate_window', 'set_accept_drop_fn', 
+        'set_build_fn', 'set_checked_changed_fn', 'set_computed_content_size_changed_fn', 'set_drag_fn', 'set_drop_fn', 'set_key_pressed_fn', 'set_mouse_double_clicked_fn', 'set_mouse_hovered_fn', 'set_mouse_moved_fn', 
+        'set_mouse_pressed_fn', 'set_mouse_released_fn', 'set_mouse_wheel_fn', 'set_style', 'set_tooltip', 'set_tooltip_fn', 'skip_draw_when_clipped', 'style', 'style_type_name_override', 'tooltip', 
+        'tooltip_offset_x', 'tooltip_offset_y', 'vertical_clipping', 'visible', 'visible_max', 'visible_min', 'width']
+
+ ['_ViewportLayers__added_frames', '_ViewportLayers__timeline', '_ViewportLayers__ui_frame', '_ViewportLayers__viewport', '_ViewportLayers__viewport_layer_event', '_ViewportLayers__viewport_layers', 
+ '_ViewportLayers__viewport_updated', '_ViewportLayers__zstack', '__class__', '__del__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__',
+  '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
+   '__weakref__', 'destroy', 'get_frame', 'layers', 'viewport_api']
+
+ ['_ViewportWidget__build_ui', '_ViewportWidget__clean_instances', '_ViewportWidget__destroy_ui', '_ViewportWidget__ensure_usd_context', 
+ '_ViewportWidget__ensure_usd_stage', '_ViewportWidget__g_instances', '_ViewportWidget__on_stage_opened', '_ViewportWidget__proxy_api', 
+ '_ViewportWidget__remove_notifications', '_ViewportWidget__rsettings_changed', '_ViewportWidget__set_image_data', '_ViewportWidget__setup_notifications', 
+ '_ViewportWidget__stage_listener', '_ViewportWidget__stage_subscription', '_ViewportWidget__ui_frame', '_ViewportWidget__update_api_texture', 
+ '_ViewportWidget__viewport_image', '_ViewportWidget__viewport_provider', '_ViewportWidget__viewport_texture', '_ViewportWidget__vp_api',
+  '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', 
+  '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', 
+  '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_viewport_changed', 'destroy', 'get_instances', 'name', 'usd_context_name', 'viewport_api',
+   'visible']
+
+['FLAG_WANT_CAPTURE_KEYBOARD', '__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
+'__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'alignment', 'call_accept_drop_fn', 
+'call_computed_content_size_changed_fn', 'call_drag_fn', 'call_drop_fn', 'call_key_pressed_fn', 'call_mouse_double_clicked_fn', 'call_mouse_hovered_fn', 'call_mouse_moved_fn', 
+'call_mouse_pressed_fn', 'call_mouse_released_fn', 'call_mouse_wheel_fn', 'call_tooltip_fn', 'checked', 'computed_content_height', 'computed_content_width', 'computed_height', 'computed_width', '
+destroy', 'dragging', 'enabled', 'fill_policy', 'has_accept_drop_fn', 'has_computed_content_size_changed_fn', 'has_drag_fn', 'has_drop_fn', 'has_key_pressed_fn', 'has_mouse_double_clicked_fn', 
+'has_mouse_hovered_fn', 'has_mouse_moved_fn', 'has_mouse_pressed_fn', 'has_mouse_released_fn', 'has_mouse_wheel_fn', 'has_tooltip_fn', 'height', 'identifier', 'name', 'opaque_for_mouse_events', 
+'prepare_draw', 'screen_position_x', 'screen_position_y', 'scroll_here', 'scroll_here_x', 'scroll_here_y', 'selected', 'set_accept_drop_fn', 'set_checked_changed_fn', 'set_computed_content_size_changed_fn',
+ 'set_drag_fn', 'set_drop_fn', 'set_key_pressed_fn', 'set_mouse_double_clicked_fn', 'set_mouse_hovered_fn', 'set_mouse_moved_fn', 'set_mouse_pressed_fn', 'set_mouse_released_fn', 
+ 'set_mouse_wheel_fn', 'set_style', 'set_tooltip', 'set_tooltip_fn', 'skip_draw_when_clipped', 'style', 'style_type_name_override', 'tooltip', 'tooltip_offset_x', 'tooltip_offset_y',
+  'visible', 'visible_max', 'visible_min', 'width']
+
+
+
+  2022-08-04 19:25:42  [Info] [omni.kit.app.impl] [py stdout]: ['FLAG_WANT_CAPTURE_KEYBOARD', '__class__', '__delattr__', '__dir__', '__doc__', '__enter__', '__eq__', '__exit__', '__format__', '__ge__', 
+  '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__',
+   '__str__', '__subclasshook__', 'add_child', 'call_accept_drop_fn', 'call_build_fn', 'call_computed_content_size_changed_fn', 'call_drag_fn', 'call_drop_fn', 'call_key_pressed_fn', 'call_mouse_double_clicked_fn',
+    'call_mouse_hovered_fn', 'call_mouse_moved_fn', 'call_mouse_pressed_fn', 'call_mouse_released_fn', 'call_mouse_wheel_fn', 'call_tooltip_fn', 'checked', 'clear', 'computed_content_height', 'computed_content_width',
+     'computed_height', 'computed_width', 'destroy', 'dragging', 'enabled', 'has_accept_drop_fn', 'has_build_fn', 'has_computed_content_size_changed_fn', 'has_drag_fn', 'has_drop_fn', 'has_key_pressed_fn',
+      'has_mouse_double_clicked_fn', 'has_mouse_hovered_fn', 'has_mouse_moved_fn', 'has_mouse_pressed_fn', 'has_mouse_released_fn', 'has_mouse_wheel_fn', 'has_tooltip_fn', 'height', 'horizontal_clipping',
+       'identifier', 'name', 'opaque_for_mouse_events', 'rebuild', 'screen_position_x', 'screen_position_y', 'scroll_here', 'scroll_here_x', 'scroll_here_y', 'selected', 'separate_window', 
+       'set_accept_drop_fn', 'set_build_fn', 'set_checked_changed_fn', 'set_computed_content_size_changed_fn', 'set_drag_fn', 'set_drop_fn', 'set_key_pressed_fn', 'set_mouse_double_clicked_fn', 
+       'set_mouse_hovered_fn', 'set_mouse_moved_fn', 'set_mouse_pressed_fn', 'set_mouse_released_fn', 'set_mouse_wheel_fn', 'set_style', 'set_tooltip', 'set_tooltip_fn', 'skip_draw_when_clipped', 
+       'style', 'style_type_name_override', 'tooltip', 'tooltip_offset_x', 'tooltip_offset_y', 'vertical_clipping', 'visible', 'visible_max', 'visible_min', 'width']

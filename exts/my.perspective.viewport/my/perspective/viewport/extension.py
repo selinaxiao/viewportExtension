@@ -42,12 +42,16 @@ class MyExtension(omni.ext.IExt):
 
     def on_startup(self, ext_id):
         print("[my.perspective.viewport] MyExtension startup")
+        
         self.cam_wrapper = CameraWrapper()
 
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
+        settings = carb.settings.get_settings()
         self.__window = None
         self.__registered = None
 
-        settings = carb.settings.get_settings()
         open_window = not settings.get(DEFAULT_VIEWPORT_NO_OPEN)
         Workspace.set_show_window_fn(self.WINDOW_NAME, lambda b: self.__show_window(None, b))
         
@@ -56,8 +60,8 @@ class MyExtension(omni.ext.IExt):
             if self.__window:
                 self.dock_with_window(self.WINDOW_NAME, 'Viewport', omni.ui.DockPosition.SAME)
         open_window = True if (open_window and self.__window) else False
+        
         editor_menu = omni.kit.ui.get_editor_menu()
-
         if editor_menu:
             self.__menu = editor_menu.add_item(self.MENU_PATH, self.__show_window, toggle=True, value=open_window)
         
@@ -67,7 +71,10 @@ class MyExtension(omni.ext.IExt):
             UsdShadeDropDelegate(),
             MaterialFileDropDelegate()
         )
-
+        
+        """
+        Add-ons to Nvidia's viewport extension
+        """
         self._pushed_menu = ui.Menu("Pushed menu")
         self.target_count = 0
         self.cam_count = 0
@@ -81,21 +88,7 @@ class MyExtension(omni.ext.IExt):
         self.icon_start_helper(self.ext_path)
         self.ext_id = ext_id
         self.screenshot_window = AdobeInterface()
-
         
-
-       
-
-
-        # self.screenshot_window._window.visible = False
-        # self.paint_tool = PaintToolInContext(ext_id)
-        # self.paint_tool._create_window()
-
-        # CanvasFrame()
-
-        # extension.PaintCoreExtension.on_startup()
- 
-        # self.proj_slider_wrapper.set_up_slider()
 
     def on_shutdown(self):
         print("[my.perspective.viewport] MyExtension shutdown")
@@ -103,9 +96,13 @@ class MyExtension(omni.ext.IExt):
         self.plane_count = 0
         
         self.cam_wrapper.on_shutdown()
+        self.proj_window = None
         self.icon_wrapper.shut_down_icons()
         self.screenshot_window.change_window_visibility(False)
-
+        
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
         Workspace.set_show_window_fn(self.WINDOW_NAME, None)
         self.__show_window(None, False)
         self.__menu = None
@@ -113,16 +110,14 @@ class MyExtension(omni.ext.IExt):
         if self.__registered:
             self.__unregister_scenes(self.__registered)
             self.__registered = None
-
+        
         # from omni.kit.viewport.window.events import set_ui_delegate
         # set_ui_delegate(None)
-
-        # self.paint_tool.paint_tool_shutdown()
-
-        
-        # extension.PaintCoreExtension.on_shutdown()
     
     def dock_with_window(self, window_name: str, dock_name: str, position: omni.ui.DockPosition, ratio: float = 1):
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
         async def wait_for_window():
             dockspace = Workspace.get_window(dock_name)
             window = Workspace.get_window(window_name)
@@ -148,11 +143,17 @@ class MyExtension(omni.ext.IExt):
 
     def __set_menu(self, value):
         """Set the menu to create this window on and off"""
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
         editor_menu = omni.kit.ui.get_editor_menu()
         if editor_menu:
             editor_menu.set_value(self.MENU_PATH, value)
 
     def __show_window(self, menu, visible):
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
         self.__set_menu(visible)
 
         if visible:
@@ -164,6 +165,10 @@ class MyExtension(omni.ext.IExt):
                 self.__window = ViewportWindow(self.WINDOW_NAME)
                 self.__window.set_visibility_changed_fn(visiblity_changed)
                 
+                """
+                Add-ons to Nvidia's viewport extension
+                initialize the slider and the pop-up window for cameras, planes, and targets
+                """
                 self.viewport_api = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__vp_api
                 self.proj_window_helper()
                 
@@ -178,11 +183,6 @@ class MyExtension(omni.ext.IExt):
 
                 with self.__window._ViewportWindow__viewport_layers._ViewportLayers__ui_frame:
                     self.proj_slider_wrapper.set_up_slider()
-                    # omni.kit.commands.execute('CreateMeshPrimWithDefaultXform',
-                    #         prim_type='Plane')
-                    # painter=Paint_tool()
-                    # painter.add_layer_helper()
-
 
         elif self.__window:
             self.__window.set_visibility_changed_fn(None)
@@ -190,6 +190,9 @@ class MyExtension(omni.ext.IExt):
             self.__window = None
         
     def __register_scenes(self):
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
         def _is_extension_loaded(extension_name: str) -> bool:
             import omni.kit
             def is_ext(ext_id: str) -> bool:
@@ -261,6 +264,9 @@ class MyExtension(omni.ext.IExt):
         return registered
 
     def __unregister_scenes(self, registered):
+        """
+        Credit to Nvidia's extension: omni.kit.viewport.window
+        """
         for item in registered:
             try:
                 item.destroy()
@@ -277,10 +283,10 @@ class MyExtension(omni.ext.IExt):
             ("Zoning Envolope", "Zoning Envolope", "envelope.png", "envelope.png", Key.Z, lambda c: carb.log_warn(f"Example button toggled {c}")), 
             ("Projection", "Projection: Ortho/ Persp/ Iso", "Camera.png", "Camera.png", Key.P, lambda c: self.proj_icon_helper(c)), 
             ("Streetview", "Streetview", "VR.png", "VR.png", Key.T, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Sun Study", "Sun Study", "sun.png", "sun.png", Key.S, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("Acoustic Analysis", "Acoustic Analysis", "Acoustic.png", "Acoustic.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}")),
-            ("test", "test", "Acoustic.png", "Acoustic.png", Key.E, lambda c: self.quick())
-
+            ("Sun Study", "Sun Study", "sun.png", "sun.png", Key.M, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Acoustic Analysis", "Acoustic Analysis", "Acoustic.png", "Acoustic.png",Key.L, lambda c: carb.log_warn(f"Example button toggled {c}")),
+            ("Wind Simulation", "Wind Simulation", "Wind.png", "Wind.png",Key.W, lambda c: carb.log_warn(f"Example button toggled {c}"))
+            # ("test", "test", "Acoustic.png", "Acoustic.png", Key.E, lambda c: self.quick())
         ]
 
         self.icon_wrapper = SideIconWrapper(ext_path, "icons", icon_buttons)
@@ -302,33 +308,45 @@ class MyExtension(omni.ext.IExt):
         return prims
 
     def ortho_remover(self):
+        """
+        remove the orthographic pop-up window and close possibly opened screenshot window
+        """
         self.ortho_window=None
         self.screenshot_window.change_window_visibility(False)
 
     def iso_remover(self):
+        """
+        remove the isometric pop-up window and close possibly opened screenshot window
+        """
         self.iso_window=None
         self.screenshot_window.change_window_visibility(False)
 
     def persp_remover(self):
+        """
+        remove the perspective pop-up window and close possibly opened screenshot window
+        """
         self.persp_window = None
         self.screenshot_window.change_window_visibility(False)
 
     def dim_remover(self):
+        """
+        remove the dimetric pop-up window and close possibly opened screenshot window
+        Also remove the helper xform "dimetric center"
+        """
         self.dim_window = None
         self.screenshot_window.change_window_visibility(False)
-        print("remove dim center")
+        # print("remove dim center")
         try:
             omni.kit.commands.execute('DeletePrims',
                 paths=['/World/Dimetric_center'])
         except:
             pass
 
-
     def ortho_window_helper(self):
         """
         get window for orthographic projection
         Contains three options for orthographic projection: top, front, right
-        Updating ortho window and ortho slider
+        Updating ortho window 
         """
         buttons = ({ 
         "Top": lambda: self.cam_wrapper.ortho_helper('top', self.current_plane, self.current_target),
@@ -342,18 +360,19 @@ class MyExtension(omni.ext.IExt):
         paint_buttons = self.ortho_window.set_up_window(self.current_plane)[0]
         self.ortho_paint_expt = paint_buttons[0]
         self.ortho_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
-        # self.ortho_opt = self.ortho_window.ortho_opt
-        # self.ortho_paint_end = paint_buttons[1]
     
     def screenshot_helper(self, x, y, a, b):
+        """
+        show the sreenshot window whenever the button 'Export Image' is hit
+        """
         print("screenshot window visible")
         print(self.screenshot_window.change_window_visibility(True))
 
     def iso_window_helper(self):
         """
         get window for isometric projection
-        Contains three options for isometric projection: top, front, right
-        Updating iso window and iso slider
+        Contains four options for isometric projection: NE, NW, SE, SW
+        Updating iso window 
         """
         buttons = ({
         "NE": lambda:self.cam_wrapper.iso_helper("NE", self.current_plane, self.current_target),
@@ -368,6 +387,11 @@ class MyExtension(omni.ext.IExt):
         self.iso_paint_expt.set_mouse_pressed_fn(lambda x, y, a, b: self.screenshot_helper(x, y, a, b))
 
     def persp_window_helper(self):
+        """
+        get window for perspective projection
+        Contains two options for perspective projection: persp, ortho
+        Updating persp window
+        """
         buttons = ({
             "Persp" : lambda:self.cam_wrapper.orth_to_persp(),
             "Orth" : lambda:self.cam_wrapper.persp_to_orth()
@@ -379,9 +403,10 @@ class MyExtension(omni.ext.IExt):
     
     def dim_window_helper(self):
         """
-        get window for isometric projection
-        Contains three options for isometric projection: top, front, right
-        Updating dim window and dim slider
+        get window for dimetric projection
+        Contains four options for isometric projection: NE, NW, SE, SW
+        Also contains a FloatDrag that adjusts the elevation angle from the ground level
+        Updating dim window
         """
         buttons = ({
         "NE": lambda:self.cam_wrapper.dim_helper("NE", self.current_plane, self.current_target),
@@ -420,7 +445,7 @@ class MyExtension(omni.ext.IExt):
                 instanceable=True)
 
         plane_pos = self.current_plane.GetAttribute('xformOp:translate').Get()
-        print(plane_pos)
+        # print(plane_pos)
         plane_path = self.current_plane.GetPath()
 
         omni.kit.commands.execute('TransformPrimCommand',
@@ -447,7 +472,7 @@ class MyExtension(omni.ext.IExt):
 
 
         self.current_target = omni.usd.get_prim_at_path(Sdf.Path(f'{plane_path}/target' + str(self.target_count)))
-        print(self.current_target)
+        # print(self.current_target)
         
         self.target_count += 1
         self.proj_slider_wrapper.slider.enabled = True
@@ -528,6 +553,9 @@ class MyExtension(omni.ext.IExt):
             self.cam_combobox.model.append_child_item(None, ui.SimpleStringModel(str(c.GetPath())))
 
     def plane_sel(self, list):
+        """
+        Takes in all the objects under stage and collect all the planes in a list, then returns the list
+        """
         planes = []
         for p in list:
             index = str(p.GetPath()).rfind('/')
@@ -538,6 +566,10 @@ class MyExtension(omni.ext.IExt):
         return planes
     
     def plane_combobox_helper(self):
+        """
+        Add all the existing planes to the plane combobox
+        Helper function for load under plane section
+        """
         self.planes = self.plane_sel(omni.usd.get_context().get_stage().GetDefaultPrim().GetChildren())
         for option in self.plane_combobox.model.get_item_children():
             self.plane_combobox.model.remove_item(option)
@@ -553,6 +585,9 @@ class MyExtension(omni.ext.IExt):
         self.cam_wrapper.cam_sel_helper(self.cameras[cam_index])
 
     def target_sel(self, list):
+        """
+        Takes in all the objects under stage and collect all the targets in a list, then returns the list
+        """
         targets = []
         for t in list:
             index = str(t.GetPath()).rfind('/')
@@ -563,6 +598,10 @@ class MyExtension(omni.ext.IExt):
         return targets
 
     def target_combobox_helper(self):
+        """
+        Add all the existing targets to the target combobox
+        Helper function for load under target section
+        """
         self.targets = self.target_sel(self.current_plane.GetChildren())
         for option in self.target_combobox.model.get_item_children():
             self.target_combobox.model.remove_item(option)
@@ -570,13 +609,19 @@ class MyExtension(omni.ext.IExt):
             self.target_combobox.model.append_child_item(None, ui.SimpleStringModel(str(t.GetPath())))
 
     def plane_combobox_selection_helper(self):
+        """
+        helper function for the select button under plane section
+        updates current_plane
+        """
         plane_index = self.plane_combobox.model.get_item_value_model().get_value_as_int()
         self.current_plane = self.planes[plane_index]
         self.proj_slider_wrapper.slider.enabled = True
-        print(self.current_plane.GetAttribute('primvars:displayOpacity'))
-        #need to find how to create a VtArray to change the opacity
-    
+        
     def target_combobox_selection_helper(self):
+        """
+        helper function for the select button under target section
+        updates current_plane
+        """
         target_index = self.target_combobox.model.get_item_value_model().get_value_as_int()
         self.current_target = self.targets[target_index]
         self.proj_slider_wrapper.slider.enabled = True
@@ -601,10 +646,10 @@ class MyExtension(omni.ext.IExt):
         self.proj_window.window_object.visible = c
         self.proj_slider_wrapper.set_label_visibility(c)
 
-    # def ortho_paint_start_helper(self, option):
-    #     if option == "Top":
-
     def quick(self,image = "C:\\Users\\LabUser\\Pictures\\OmniBeehive\\Fun.png"):
+        """
+        trail function, not used
+        """
         # os.system('cmd /k "cd C:\Program Files\Adobe\Adobe Photoshop 2022"')
         # os.system('cmd /k "Photoshop.exe --open "C:\\Users\\LabUser\\Pictures\\OmniBeehive\\Fun.png""')
         # FNULL = open(os.devnull,'w')
@@ -613,23 +658,25 @@ class MyExtension(omni.ext.IExt):
         # subprocess.call( args,stdout=FNULL,stderr=FNULL, shell=False)
         ##HOW TO SET RESOLUTION
         # self.__window.viewport_api._viewport_texture._ViewportTexture__setup_resolution((3840,2160)
-        test = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport.get_instances().gi_frame.f_trace
+        # test = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport.get_instances().gi_frame.f_trace
+        test = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__update_api_texture
         
         # _ViewportWindow__viewport_layers
-        print('~'*30)
-        print(dir(self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport.get_instances()))
-        print('~'*30)
+        # print('~'*30)
+        # print(dir(self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport.get_instances()))
+        # print('~'*30)
         print(test)
         print(dir(test))
        
-        # #set and get resolution
+        #set and get resolution
         # test._ViewportTexture__setup_resolution((1920,1080))
         # print(test.resolution)
 
-        # # import inspect 
-        # # print(inspect.getattr_static(test))
+        # import inspect 
+        # print(inspect.getattr_static(test))
 
         # print(test.frame_info,type(test.frame_info))
+        test = self.__window._ViewportWindow__viewport_layers._ViewportLayers__viewport._ViewportWidget__update_api_texture
 
  
         
